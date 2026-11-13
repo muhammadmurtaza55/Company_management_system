@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Department Analytics &amp; Performance Report{% endblock %}
+
+{% block extra_css %}
+<style>
+  @media print {
+    nav.navbar, footer.footer, .no-print, .breadcrumb, .alert { display: none !important; }
+    body { background-color: #fff !important; }
+    .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 no-print">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('report.index') }}" class="text-decoration-none text-muted">Reports</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Departments</li>
+        </ol>
+      </nav>
+      <h2 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-building text-info"></i>
+        <span>Department Performance &amp; Allocation Report</span>
+      </h2>
+      <p class="text-muted mb-0">Structural units, managerial leadership, staffing counts, and financial commitments in PKR.</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <button onclick="window.print()" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+        <i class="bi bi-printer-fill"></i>
+        <span>Print Report</span>
+      </button>
+      <a href="{{ url_for('report.export_departments_csv') }}" class="btn btn-outline-success btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-file-earmark-spreadsheet"></i>
+        <span>Export CSV</span>
+      </a>
+      <a href="{{ url_for('report.index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Hub
+      </a>
+    </div>
+  </div>
+
+  <!-- Printable Header Banner -->
+  <div class="d-none d-print-block mb-4 border-bottom pb-3">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h3 class="fw-bold text-dark mb-0">Nexus Enterprise Corp.</h3>
+        <p class="small text-muted mb-0">Departmental Structure, Leadership, and Budget Allocation</p>
+      </div>
+      <div class="text-end small text-muted">
+        <div>Date: <strong>{{ ""|karachi_time }}</strong></div>
+        <div>Total Units: {{ dept_stats|length }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metric Badges -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-info h-100">
+        <span class="text-muted small fw-bold text-uppercase">Operating Departments</span>
+        <h3 class="fw-bold text-info my-1">{{ dept_stats|length }}</h3>
+        <span class="text-muted small">Configured units</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-primary h-100">
+        <span class="text-muted small fw-bold text-uppercase">Total Department Staff</span>
+        <h3 class="fw-bold text-dark my-1">{{ total_company_staff }}</h3>
+        <span class="text-muted small">Assigned headcount</span>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-success h-100">
+        <span class="text-muted small fw-bold text-uppercase">Total Monthly Salary Outlay</span>
+        <h3 class="fw-bold text-success my-1">{{ total_company_salary|currency_pkr }}</h3>
+        <span class="text-muted small">Total compensation commitment</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light text-muted small text-uppercase">
+          <tr>
+            <th>Department</th>
+            <th>Manager / Head</th>
+            <th class="text-center">Staff Count</th>
+            <th class="text-center">Active Staff</th>
+            <th class="text-end">Total Salary (PKR)</th>
+            <th class="text-end pe-3">Average Salary (PKR)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in dept_stats %}
+            <tr>
+              <td>
+                <span class="fw-bold text-dark fs-6">{{ row.department.name }}</span>
+                <span class="badge bg-secondary-subtle text-secondary font-monospace ms-2">{{ row.department.code }}</span>
+                {% if row.department.description %}
+                  <div class="small text-muted text-truncate" style="max-width: 300px;">{{ row.department.description }}</div>
+                {% endif %}
+              </td>
+              <td>
+                <i class="bi bi-person-badge text-primary me-1"></i>
+                <span class="fw-semibold text-dark">{{ row.manager_name }}</span>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-light text-dark border px-2 py-1">{{ row.staff_count }}</span>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-success-subtle text-success px-2 py-1">{{ row.active_count }}</span>
+              </td>
+              <td class="text-end font-monospace fw-bold text-dark">
+                {{ row.total_salary|currency_pkr }}
+              </td>
+              <td class="text-end font-monospace text-muted pe-3">
+                {{ row.avg_salary|currency_pkr }}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-5 text-muted">
+                No departmental records established.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

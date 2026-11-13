@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}PostgreSQL Diagnostics &amp; Connection Test{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header Section -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">PostgreSQL Diagnostics</li>
+        </ol>
+      </nav>
+      <h2 class="fw-bold mb-1"><i class="bi bi-database me-2 text-primary"></i>PostgreSQL Connection Diagnostics</h2>
+      <p class="text-muted mb-0">Live test and status verification for your PostgreSQL database.</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <button id="btn-test-db" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+        <span id="test-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+        <i class="bi bi-arrow-clockwise"></i>
+        <span>Run Live Connection Test</span>
+      </button>
+
+      {% if diagnostics.connected %}
+        <button id="btn-init-db" class="btn btn-outline-success d-flex align-items-center gap-2 shadow-sm">
+          <i class="bi bi-table"></i>
+          <span>Initialize Database Tables</span>
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Live Dynamic Test Result Placeholder (Updated via AJAX) -->
+  <div id="live-test-result" class="d-none mb-4">
+    <div class="alert-content shadow-sm rounded-3"></div>
+  </div>
+
+  <!-- Primary Status Card -->
+  <div class="card diag-panel mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+      <span class="fw-bold text-secondary text-uppercase small">Connection Health Summary</span>
+      {% if diagnostics.status == 'SUCCESS' %}
+        <span class="badge bg-success-subtle text-success border border-success px-3 py-2">
+          <span class="status-badge-pulse pulse-success"></span> Connected
+        </span>
+      {% elif diagnostics.status == 'NOT_CONFIGURED' %}
+        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-3 py-2">
+          <span class="status-badge-pulse pulse-warning"></span> Standby: Not Configured
+        </span>
+      {% else %}
+        <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2">
+          <span class="status-badge-pulse pulse-danger"></span> Connection Failed
+        </span>
+      {% endif %}
+    </div>
+
+    <div class="card-body p-4">
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="p-3 bg-light rounded-3 border">
+            <span class="text-muted small d-block mb-1">Database Dialect</span>
+            <span class="fw-bold text-dark fs-5">PostgreSQL (psycopg)</span>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="p-3 bg-light rounded-3 border">
+            <span class="text-muted small d-block mb-1">Target Database</span>
+            <span class="fw-bold text-dark fs-5">
+              {{ diagnostics.database_name if diagnostics.database_name else 'Unconnected' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="p-3 bg-light rounded-3 border">
+            <span class="text-muted small d-block mb-1">Round-Trip Latency</span>
+            <span class="fw-bold text-dark fs-5">
+              {% if diagnostics.latency_ms is not none %}
+                <span class="{{ 'text-success' if diagnostics.latency_ms < 50 else 'text-warning' }}">{{ diagnostics.latency_ms }} ms</span>
+              {% else %}
+                <span class="text-muted">N/A</span>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="p-3 bg-light rounded-3 border">
+            <span class="text-muted small d-block mb-1">Configured URI</span>
+            <span class="fw-bold text-dark text-truncate d-block" title="{{ diagnostics.masked_uri }}">
+              <code>{{ diagnostics.masked_uri }}</code>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- State: Connected Details -->
+      {% if diagnostics.status == 'SUCCESS' %}
+        <div class="alert alert-success d-flex align-items-start mb-4">
+          <i class="bi bi-check-circle-fill text-success fs-4 me-3 mt-1"></i>
+          <div>
+            <h5 class="fw-bold alert-heading mb-1">PostgreSQL Database Connection Successful!</h5>
+            <p class="mb-1">Flask-SQLAlchemy is successfully communicating with your PostgreSQL database instance.</p>
+            <div class="small text-muted font-monospace">{{ diagnostics.version }}</div>
+          </div>
+        </div>
+
+        <!-- Table Inspection -->
+        <h6 class="fw-bold mb-3"><i class="bi bi-layout-text-window-reverse me-2"></i>PostgreSQL Public Schema Tables</h6>
+        {% if diagnostics.tables %}
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            {% for table in diagnostics.tables %}
+              <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-2 fs-6">
+                <i class="bi bi-table me-1"></i> {{ table }}
+              </span>
+            {% endfor %}
+          </div>
+          <p class="text-muted small">All required application tables are verified and present in PostgreSQL.</p>
+        {% else %}
+          <div class="p-3 bg-warning-subtle text-warning-emphasis rounded-3 border border-warning mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            The PostgreSQL connection is alive, but no application tables exist yet in the <code>public</code> schema.
+            Click the <strong>Initialize Database Tables</strong> button above to create the <code>users</code>, <code>departments</code>, and <code>employees</code> tables!
+          </div>
+        {% endif %}
+
+      <!-- State: Not Configured -->
+      {% elif diagnostics.status == 'NOT_CONFIGURED' %}
+        <div class="alert alert-warning d-flex align-items-start mb-4">
+          <i class="bi bi-exclamation-triangle-fill text-warning fs-4 me-3 mt-1"></i>
+          <div>
+            <h5 class="fw-bold alert-heading mb-1">PostgreSQL Credentials Not Configured</h5>
+            <p class="mb-0">
+              The application is operating in safe standby mode. To connect to PostgreSQL, you need to create a <code>.env</code> file with your PostgreSQL connection parameters.
+            </p>
+          </div>
+        </div>
+
+        <div class="card border bg-light mb-3">
+          <div class="card-header bg-white py-2 fw-semibold">
+            <i class="bi bi-terminal me-2"></i>How to Configure PostgreSQL in <code>.env</code>
+          </div>
+          <div class="card-body">
+            <p class="small text-muted mb-2">1. In the project root folder, copy the example environment template:</p>
+            <pre class="code-preview mb-3">copy .env.example .env</pre>
+
+            <p class="small text-muted mb-2">2. Open <code>.env</code> and set your PostgreSQL connection details. Choose either option below:</p>
+
+            <div class="p-3 bg-dark rounded-3 text-light font-monospace small mb-3">
+              <span class="text-secondary"># OPTION A: Full Connection URI (Local or Cloud like Render/Neon/Supabase)</span><br>
+              <span class="text-info">DATABASE_URL</span>=<span class="text-warning">postgresql+psycopg://postgres:your_secret_password@localhost:5432/company_management_db</span><br><br>
+              <span class="text-secondary"># OPTION B: Discrete Credentials</span><br>
+              <span class="text-info">DB_USER</span>=postgres<br>
+              <span class="text-info">DB_PASSWORD</span>=your_secret_password<br>
+              <span class="text-info">DB_HOST</span>=localhost<br>
+              <span class="text-info">DB_PORT</span>=5432<br>
+              <span class="text-info">DB_NAME</span>=company_management_db
+            </div>
+
+            <p class="small text-muted mb-2">3. Ensure your PostgreSQL server is running and the database exists:</p>
+            <pre class="code-preview mb-3"># Using PostgreSQL CLI:
+createdb company_management_db
+
+# Or in psql shell:
+CREATE DATABASE company_management_db;</pre>
+
+            <p class="small text-muted mb-0">4. Restart the Flask application and click <strong>Run Live Connection Test</strong> above.</p>
+          </div>
+        </div>
+
+      <!-- State: Connection Error -->
+      {% else %}
+        <div class="alert alert-danger d-flex align-items-start mb-4">
+          <i class="bi bi-x-octagon-fill text-danger fs-4 me-3 mt-1"></i>
+          <div>
+            <h5 class="fw-bold alert-heading mb-1">PostgreSQL Connection Failed</h5>
+            <p class="mb-2">{{ diagnostics.message }}</p>
+            {% if diagnostics.hint %}
+              <div class="fw-semibold text-danger-emphasis mb-2">
+                <i class="bi bi-lightbulb me-1"></i> {{ diagnostics.hint }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if diagnostics.error %}
+          <div class="mb-4">
+            <span class="text-muted small fw-bold d-block mb-1">Raw Error Message:</span>
+            <pre class="code-preview text-danger-emphasis mb-0">{{ diagnostics.error }}</pre>
+          </div>
+        {% endif %}
+
+        <div class="card border bg-light">
+          <div class="card-header bg-white py-2 fw-semibold">
+            <i class="bi bi-wrench-adjustable me-2"></i>Troubleshooting Checklist
+          </div>
+          <div class="card-body">
+            <ul class="mb-0 small text-muted">
+              <li class="mb-2"><strong>Is PostgreSQL running?</strong> Check Windows Services or Docker to verify the PostgreSQL service is active.</li>
+              <li class="mb-2"><strong>Are the credentials correct?</strong> Check <code>DB_USER</code> and <code>DB_PASSWORD</code> in your <code>.env</code> file.</li>
+              <li class="mb-2"><strong>Does the database exist?</strong> Make sure the database named in <code>DB_NAME</code> or <code>DATABASE_URL</code> has been created.</li>
+              <li class="mb-0"><strong>Is the port accessible?</strong> The default PostgreSQL port is <code>5432</code>. Check if another port was assigned.</li>
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- CLI Diagnostic Command Reference -->
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <i class="bi bi-terminal-fill text-primary"></i>
+        <h5 class="fw-bold mb-0">Command-Line Diagnostics</h5>
+      </div>
+      <p class="text-muted small mb-3">You can also test the connection and manage the database directly from PowerShell or terminal:</p>
+      
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 border">
+            <span class="text-dark fw-bold small d-block mb-1">Test Database Connection:</span>
+            <code class="d-block bg-dark text-info p-2 rounded small">flask --app run.py test-db</code>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 border">
+            <span class="text-dark fw-bold small d-block mb-1">Initialize Database Tables:</span>
+            <code class="d-block bg-dark text-info p-2 rounded small">flask --app run.py init-db</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

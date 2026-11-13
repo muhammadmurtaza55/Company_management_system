@@ -1,0 +1,247 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top border-bottom border-secondary-subtle shadow-sm">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-white" href="{{ url_for('main.index') }}">
+      <span class="brand-icon bg-primary text-white rounded p-1 d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+        <i class="bi bi-building fs-5"></i>
+      </span>
+      <span>Nexus<span class="text-primary">CMS</span></span>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link {{ 'active fw-semibold' if request.endpoint == 'main.index' else '' }}" href="{{ url_for('main.index') }}">
+            <i class="bi bi-house-door me-1"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ 'active fw-semibold' if request.endpoint == 'main.db_test' else '' }}" href="{{ url_for('main.db_test') }}">
+            <i class="bi bi-database me-1"></i> PostgreSQL Diagnostics
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ 'active fw-semibold' if request.endpoint == 'main.about' else '' }}" href="{{ url_for('main.about') }}">
+            <i class="bi bi-info-circle me-1"></i> Architecture
+          </a>
+        </li>
+        {% if current_user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link {{ 'active fw-semibold' if request.endpoint and request.endpoint.startswith('task.') else '' }}" href="{{ url_for('task.index') }}">
+              <i class="bi bi-check2-square me-1"></i> Tasks
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ 'active fw-semibold' if request.endpoint and request.endpoint.startswith('payroll.') else '' }}" href="{{ url_for('payroll.index') }}">
+              <i class="bi bi-cash-stack me-1"></i> Payroll
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ 'active fw-semibold' if request.endpoint and request.endpoint.startswith('attendance.') else '' }}" href="{{ url_for('attendance.index') }}">
+              <i class="bi bi-calendar-check me-1"></i> Attendance
+            </a>
+          </li>
+          {% if current_user.is_admin or current_user.is_manager %}
+            <li class="nav-item">
+              <a class="nav-link {{ 'active fw-semibold' if request.endpoint and request.endpoint.startswith('employee.') else '' }}" href="{{ url_for('employee.index') }}">
+                <i class="bi bi-people me-1"></i> Employees
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {{ 'active fw-semibold' if request.endpoint and request.endpoint.startswith('department.') else '' }}" href="{{ url_for('department.index') }}">
+                <i class="bi bi-building me-1"></i> Departments
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {{ 'active fw-semibold' if request.endpoint and request.endpoint.startswith('report.') else '' }}" href="{{ url_for('report.index') }}">
+                <i class="bi bi-file-earmark-bar-graph me-1"></i> Reports
+              </a>
+            </li>
+          {% elif current_user.is_employee %}
+            <li class="nav-item">
+              <a class="nav-link {{ 'active fw-semibold' if request.endpoint and request.endpoint.startswith('employee.') else '' }}" href="{{ url_for('employee.self_profile') }}">
+                <i class="bi bi-person-badge me-1"></i> My Profile
+              </a>
+            </li>
+          {% endif %}
+        {% endif %}
+        {% if current_user.is_authenticated and current_user.is_admin %}
+          <li class="nav-item">
+            <a class="nav-link text-warning fw-semibold {{ 'active' if request.endpoint and request.endpoint.startswith('admin.') else '' }}" href="{{ url_for('admin.dashboard') }}">
+              <i class="bi bi-speedometer2 me-1"></i> Admin Dashboard
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+
+      <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('main.db_test') }}" class="btn btn-outline-info btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-database-check"></i>
+          <span class="d-none d-sm-inline">DB Status</span>
+        </a>
+
+        {% if current_user.is_authenticated %}
+          <!-- Authenticated User Menu -->
+          <div class="dropdown">
+            <button class="btn btn-outline-light btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center fw-bold" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                {{ current_user.username[0]|upper }}
+              </span>
+              <span class="fw-semibold">{{ current_user.username }}</span>
+              {% if current_user.is_admin %}
+                <span class="badge bg-danger" style="font-size: 0.65rem;">Admin</span>
+              {% elif current_user.is_manager %}
+                <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Manager</span>
+              {% else %}
+                <span class="badge bg-secondary" style="font-size: 0.65rem;">Employee</span>
+              {% endif %}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+              <li class="px-3 py-2 border-bottom">
+                <div class="small text-muted">Signed in as:</div>
+                <div class="fw-bold text-dark text-truncate" style="max-width: 200px;">{{ current_user.email }}</div>
+              </li>
+              <li>
+                <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('auth.profile') }}">
+                  <i class="bi bi-person-gear text-primary"></i>
+                  <span>Profile &amp; Password</span>
+                </a>
+              </li>
+              
+              {% if current_user.is_admin %}
+                <li><hr class="dropdown-divider"></li>
+                <li class="dropdown-header text-uppercase small text-muted">Admin Controls</li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2 fw-semibold text-primary" href="{{ url_for('admin.dashboard') }}">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Admin Dashboard</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('employee.index') }}">
+                    <i class="bi bi-person-badge text-primary"></i>
+                    <span>Employees</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('department.index') }}">
+                    <i class="bi bi-building text-info"></i>
+                    <span>Departments</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('attendance.index') }}">
+                    <i class="bi bi-calendar-check text-success"></i>
+                    <span>Attendance &amp; Leaves</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('task.index') }}">
+                    <i class="bi bi-check2-square text-warning"></i>
+                    <span>Tasks &amp; Workflow</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('payroll.index') }}">
+                    <i class="bi bi-cash-stack text-success"></i>
+                    <span>Salary &amp; Payroll</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('report.index') }}">
+                    <i class="bi bi-file-earmark-bar-graph text-secondary"></i>
+                    <span>Executive Reports</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('auth.list_users') }}">
+                    <i class="bi bi-people-fill text-danger"></i>
+                    <span>User Management</span>
+                  </a>
+                </li>
+              {% elif current_user.is_manager %}
+                <li><hr class="dropdown-divider"></li>
+                <li class="dropdown-header text-uppercase small text-muted">Manager Access</li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('task.index') }}">
+                    <i class="bi bi-check2-square text-warning"></i>
+                    <span>Department Tasks</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('payroll.index') }}">
+                    <i class="bi bi-cash-stack text-success"></i>
+                    <span>Department Payroll</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('attendance.index') }}">
+                    <i class="bi bi-calendar-check text-success"></i>
+                    <span>Department Attendance</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('employee.index') }}">
+                    <i class="bi bi-people-fill text-primary"></i>
+                    <span>Department Staff</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('report.index') }}">
+                    <i class="bi bi-file-earmark-bar-graph text-secondary"></i>
+                    <span>Department Reports</span>
+                  </a>
+                </li>
+              {% elif current_user.is_employee %}
+                <li><hr class="dropdown-divider"></li>
+                <li class="dropdown-header text-uppercase small text-muted">Staff Access</li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('task.my_tasks') }}">
+                    <i class="bi bi-check2-square text-warning"></i>
+                    <span>My Assigned Tasks</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('payroll.index') }}">
+                    <i class="bi bi-receipt text-success"></i>
+                    <span>My Salary &amp; Payslips</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('attendance.index') }}">
+                    <i class="bi bi-calendar-check text-success"></i>
+                    <span>Check-In &amp; Leaves</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ url_for('employee.self_profile') }}">
+                    <i class="bi bi-person-badge text-primary"></i>
+                    <span>My Employee Profile</span>
+                  </a>
+                </li>
+              {% endif %}
+
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item py-2 text-danger d-flex align-items-center gap-2" href="{{ url_for('auth.logout') }}">
+                  <i class="bi bi-box-arrow-right"></i>
+                  <span>Sign Out</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        {% else %}
+          <!-- Anonymous User -->
+          <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+            <i class="bi bi-box-arrow-in-right"></i>
+            <span>Sign In</span>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</nav>
+

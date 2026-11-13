@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Task: {{ task.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+
+      <!-- Breadcrumbs -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('task.index') }}" class="text-decoration-none text-muted">Tasks</a></li>
+          <li class="breadcrumb-item active" aria-current="page">#{{ task.id }}</li>
+        </ol>
+      </nav>
+
+      <!-- Task Card -->
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge {{ task.priority_badge_class }} px-2 py-1 text-capitalize">
+              {{ task.priority }} Priority
+            </span>
+            <span class="badge {{ task.status_badge_class }} px-2 py-1 text-capitalize">
+              {{ task.status|replace('_', ' ') }}
+            </span>
+            {% if task.is_overdue %}
+              <span class="badge bg-danger text-white">Overdue</span>
+            {% endif %}
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            {% if current_user.is_admin or current_user.is_manager %}
+              <a href="{{ url_for('task.edit', id=task.id) }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+                <i class="bi bi-pencil"></i>
+                <span>Edit</span>
+              </a>
+            {% endif %}
+            <a href="{{ url_for('task.index') }}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-arrow-left"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <h4 class="fw-bold text-dark mb-3">{{ task.title }}</h4>
+
+          {% if task.description %}
+            <div class="p-3 bg-light rounded-3 border mb-4">
+              <h6 class="small fw-bold text-muted text-uppercase mb-2">Description &amp; Deliverables</h6>
+              <p class="mb-0 text-dark" style="white-space: pre-wrap;">{{ task.description }}</p>
+            </div>
+          {% endif %}
+
+          <!-- Attributes Grid -->
+          <div class="row g-3 mb-4 small">
+            <div class="col-6 col-md-3">
+              <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Assigned To</span>
+              {% if task.assignee %}
+                <a href="{{ url_for('employee.detail', id=task.assignee.id) }}" class="fw-bold text-dark text-decoration-none">
+                  {{ task.assignee.full_name }}
+                </a>
+                <div class="text-muted" style="font-size: 0.72rem;">{{ task.assignee.job_title }}</div>
+              {% else %}
+                <span class="text-muted fst-italic">Unassigned</span>
+              {% endif %}
+            </div>
+
+            <div class="col-6 col-md-3">
+              <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Department</span>
+              {% if task.assignee and task.assignee.department %}
+                <span class="badge bg-light text-dark border">{{ task.assignee.department.name }}</span>
+              {% else %}
+                <span class="text-muted">Unassigned</span>
+              {% endif %}
+            </div>
+
+            <div class="col-6 col-md-3">
+              <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Due Date / Deadline</span>
+              {% if task.due_date %}
+                <span class="fw-bold {% if task.is_overdue %}text-danger{% else %}text-dark{% endif %}">
+                  {{ task.due_date.strftime('%B %d, %Y') }}
+                </span>
+              {% else %}
+                <span class="text-muted">No deadline</span>
+              {% endif %}
+            </div>
+
+            <div class="col-6 col-md-3">
+              <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Date Created</span>
+              <span class="text-dark">{{ task.created_at|karachi_time('%b %d, %Y') }}</span>
+            </div>
+          </div>
+
+          <!-- Quick Status Progression Box -->
+          <div class="p-3 bg-white border rounded-3 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+            <div>
+              <span class="small fw-bold text-dark d-block">Update Task Status</span>
+              <span class="small text-muted">Change progression stage for this task</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+              {% if task.status != 'pending' %}
+                <form method="POST" action="{{ url_for('task.update_status', id=task.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="status" value="pending">
+                  <button type="submit" class="btn btn-outline-warning btn-sm">Mark Pending</button>
+                </form>
+              {% endif %}
+
+              {% if task.status != 'in_progress' %}
+                <form method="POST" action="{{ url_for('task.update_status', id=task.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="status" value="in_progress">
+                  <button type="submit" class="btn btn-outline-info btn-sm">Mark In Progress</button>
+                </form>
+              {% endif %}
+
+              {% if task.status != 'completed' %}
+                <form method="POST" action="{{ url_for('task.update_status', id=task.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="status" value="completed">
+                  <button type="submit" class="btn btn-success btn-sm d-flex align-items-center gap-1">
+                    <i class="bi bi-check-lg"></i>
+                    <span>Mark Completed</span>
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Edit Task #{{ task.id }}{% else %}Assign New Task{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-7">
+
+      <!-- Breadcrumbs -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('task.index') }}" class="text-decoration-none text-muted">Tasks</a></li>
+          <li class="breadcrumb-item active" aria-current="page">{% if is_edit %}Edit Task{% else %}Assign Task{% endif %}</li>
+        </ol>
+      </nav>
+
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <i class="bi bi-pencil-square text-primary"></i>
+            <span>{% if is_edit %}Edit Task Details{% else %}Assign Corporate Task{% endif %}</span>
+          </h5>
+          <p class="text-muted small mb-0">Set task requirements, assignees, deadlines, and priorities.</p>
+        </div>
+
+        <div class="card-body p-4">
+          <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- Title -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">{{ form.title.label }} <span class="text-danger">*</span></label>
+              {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), placeholder="Enter descriptive task title...") }}
+              {% for err in form.title.errors %}
+                <div class="invalid-feedback">{{ err }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">{{ form.description.label }}</label>
+              {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="4", placeholder="Detailed instructions, deliverables, or criteria for completion...") }}
+              {% for err in form.description.errors %}
+                <div class="invalid-feedback">{{ err }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Assignee & Deadline -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.assigned_to_id.label }}</label>
+                {{ form.assigned_to_id(class="form-select" + (" is-invalid" if form.assigned_to_id.errors else "")) }}
+                {% for err in form.assigned_to_id.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.due_date.label }}</label>
+                {{ form.due_date(class="form-control" + (" is-invalid" if form.due_date.errors else ""), type="date") }}
+                {% for err in form.due_date.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Priority & Status -->
+            <div class="row g-3 mb-4">
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.priority.label }} <span class="text-danger">*</span></label>
+                {{ form.priority(class="form-select" + (" is-invalid" if form.priority.errors else "")) }}
+                {% for err in form.priority.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.status.label }} <span class="text-danger">*</span></label>
+                {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                {% for err in form.status.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+              <a href="{{ url_for('task.index') }}" class="btn btn-outline-secondary">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+                <i class="bi bi-check-lg"></i>
+                <span>{{ form.submit.label.text }}</span>
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

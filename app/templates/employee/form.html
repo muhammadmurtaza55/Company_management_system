@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {% if is_edit %}Edit {{ employee.full_name }}{% else %}Register New Employee{% endif %} | Nexus CMS
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumbs & Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('employee.index') }}" class="text-decoration-none text-muted">Employees</a></li>
+        {% if is_edit %}
+          <li class="breadcrumb-item"><a href="{{ url_for('employee.detail', id=employee.id) }}" class="text-decoration-none text-muted">{{ employee.full_name }}</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Edit</li>
+        {% else %}
+          <li class="breadcrumb-item active" aria-current="page">Add New</li>
+        {% endif %}
+      </ol>
+    </nav>
+    <a href="{{ url_for('employee.index') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-x-lg"></i>
+      <span>Cancel</span>
+    </a>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-10 col-xl-9">
+      
+      <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+        
+        <!-- Header Banner -->
+        <div class="card-header bg-dark text-white p-4">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 1.4rem;">
+              {% if is_edit %}
+                <i class="bi bi-person-gear"></i>
+              {% else %}
+                <i class="bi bi-person-plus-fill"></i>
+              {% endif %}
+            </div>
+            <div>
+              <h3 class="h4 fw-bold mb-1">
+                {% if is_edit %}
+                  Edit Employee Record: <span class="text-primary">{{ employee.full_name }}</span>
+                {% else %}
+                  Register New Employee
+                {% endif %}
+              </h3>
+              <p class="text-secondary small mb-0">
+                {% if is_edit %}
+                  Modify staff credentials, departmental assignments, or compensation.
+                {% else %}
+                  Add a new staff member to the company directory with department and role assignment.
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Body -->
+        <div class="card-body p-4 p-md-5">
+          <form method="POST" action="" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- Section 1: Identification & Basic Info -->
+            <div class="mb-4">
+              <h5 class="fw-bold text-dark border-bottom pb-2 d-flex align-items-center gap-2">
+                <i class="bi bi-person-badge text-primary"></i>
+                <span>Employee Identification</span>
+              </h5>
+              
+              <div class="row g-3 mt-1">
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold text-dark">
+                    Employee ID <span class="text-danger">*</span>
+                  </label>
+                  {{ form.employee_id(class="form-control font-monospace " + ("is-invalid" if form.employee_id.errors else "")) }}
+                  {% for error in form.employee_id.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                  <div class="form-text small">Unique company staff identifier.</div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold text-dark">
+                    First Name <span class="text-danger">*</span>
+                  </label>
+                  {{ form.first_name(class="form-control " + ("is-invalid" if form.first_name.errors else "")) }}
+                  {% for error in form.first_name.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold text-dark">
+                    Last Name <span class="text-danger">*</span>
+                  </label>
+                  {{ form.last_name(class="form-control " + ("is-invalid" if form.last_name.errors else "")) }}
+                  {% for error in form.last_name.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 2: Contact Information -->
+            <div class="mb-4">
+              <h5 class="fw-bold text-dark border-bottom pb-2 d-flex align-items-center gap-2">
+                <i class="bi bi-envelope-at text-primary"></i>
+                <span>Contact Information</span>
+              </h5>
+
+              <div class="row g-3 mt-1">
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold text-dark">
+                    Corporate Email <span class="text-danger">*</span>
+                  </label>
+                  {{ form.email(class="form-control " + ("is-invalid" if form.email.errors else "")) }}
+                  {% for error in form.email.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                  <div class="form-text small">Must be unique across all company staff.</div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold text-dark">Phone Number</label>
+                  {{ form.phone(class="form-control " + ("is-invalid" if form.phone.errors else "")) }}
+                  {% for error in form.phone.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                  <div class="form-text small">Include country code if applicable.</div>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold text-dark">Residential Address</label>
+                  {{ form.address(class="form-control " + ("is-invalid" if form.address.errors else "")) }}
+                  {% for error in form.address.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 3: Job Role, Department & Compensation -->
+            <div class="mb-4">
+              <h5 class="fw-bold text-dark border-bottom pb-2 d-flex align-items-center gap-2">
+                <i class="bi bi-briefcase text-primary"></i>
+                <span>Employment &amp; Department</span>
+              </h5>
+
+              <div class="row g-3 mt-1">
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold text-dark">
+                    Job Title <span class="text-danger">*</span>
+                  </label>
+                  {{ form.job_title(class="form-control " + ("is-invalid" if form.job_title.errors else "")) }}
+                  {% for error in form.job_title.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold text-dark">Department</label>
+                  {{ form.department_id(class="form-select " + ("is-invalid" if form.department_id.errors else "")) }}
+                  {% for error in form.department_id.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold text-dark">Joining Date</label>
+                  {{ form.hire_date(class="form-control " + ("is-invalid" if form.hire_date.errors else "")) }}
+                  {% for error in form.hire_date.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold text-dark">Base Monthly Salary ($)</label>
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    {{ form.salary(class="form-control " + ("is-invalid" if form.salary.errors else "")) }}
+                  </div>
+                  {% for error in form.salary.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold text-dark">
+                    Employment Status <span class="text-danger">*</span>
+                  </label>
+                  {{ form.status(class="form-select " + ("is-invalid" if form.status.errors else "")) }}
+                  {% for error in form.status.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 4: Portal Login Link (Optional) -->
+            <div class="mb-4">
+              <h5 class="fw-bold text-dark border-bottom pb-2 d-flex align-items-center gap-2">
+                <i class="bi bi-shield-lock text-primary"></i>
+                <span>System Portal Access (Optional)</span>
+              </h5>
+
+              <div class="row g-3 mt-1">
+                <div class="col-12 col-md-8">
+                  <label class="form-label fw-semibold text-dark">Link to Existing User Account</label>
+                  {{ form.user_id(class="form-select " + ("is-invalid" if form.user_id.errors else "")) }}
+                  {% for error in form.user_id.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                  <div class="form-text small">Connect this employee profile to a login account for portal authentication.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit & Action Buttons -->
+            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+              <a href="{{ url_for('employee.index') }}" class="btn btn-light px-4 border">Cancel</a>
+              <button type="submit" class="btn btn-primary px-4 d-flex align-items-center gap-2 shadow-sm">
+                {% if is_edit %}
+                  <i class="bi bi-check2-circle"></i>
+                  <span>Save Profile Changes</span>
+                {% else %}
+                  <i class="bi bi-person-check-fill"></i>
+                  <span>Create Employee</span>
+                {% endif %}
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

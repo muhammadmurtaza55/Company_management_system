@@ -1,0 +1,32 @@
+# ====================================================================
+# Render Blueprint Specification (Infrastructure as Code)
+# Nexus Company Management System
+# ====================================================================
+
+services:
+  - type: web
+    name: company-management-system
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r requirements.txt && flask db upgrade"
+    startCommand: "gunicorn -c gunicorn_config.py wsgi:app"
+    healthCheckPath: /db-test
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: company-management-db
+          property: connectionString
+
+databases:
+  - name: company-management-db
+    databaseName: company_management
+    user: postgres
+    region: oregon
+    plan: free
+    ipAllowList: []
+

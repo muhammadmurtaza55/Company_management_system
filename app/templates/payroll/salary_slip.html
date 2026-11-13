@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+
+{% block title %}Salary Slip - {{ payroll.employee.full_name }} ({{ payroll.pay_period }}){% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Screen Presentation */
+  .payslip-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  .payslip-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    padding: 2.2rem 2.5rem;
+  }
+
+  .payslip-body {
+    padding: 2.5rem;
+  }
+
+  .payslip-table th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .net-pay-banner {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 2px solid #a7f3d0;
+    border-radius: 0.75rem;
+    padding: 1.5rem 2rem;
+  }
+
+  .signature-box {
+    border-top: 1px dashed #cbd5e1;
+    padding-top: 0.5rem;
+    margin-top: 3.5rem;
+    text-align: center;
+  }
+
+  /* Print Optimization */
+  @media print {
+    /* Hide navigation, topbar, footer, and buttons */
+    nav.navbar, footer.footer, .no-print, .breadcrumb, .alert {
+      display: none !important;
+    }
+
+    body {
+      background-color: #ffffff !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .container {
+      max-width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .payslip-wrapper {
+      box-shadow: none !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 0 !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+    }
+
+    .payslip-header {
+      background: #0f172a !important;
+      color: #ffffff !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .net-pay-banner {
+      background: #ecfdf5 !important;
+      border: 1px solid #10b981 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumbs & Print Actions (Hidden in Print) -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 no-print">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('payroll.index') }}" class="text-decoration-none text-muted">Payroll</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('payroll.history') }}" class="text-decoration-none text-muted">History</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Payslip #{{ payroll.id }}</li>
+        </ol>
+      </nav>
+      <h2 class="h4 fw-bold text-dark mb-0">Monthly Salary Statement</h2>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <button onclick="window.print()" class="btn btn-primary btn-sm d-flex align-items-center gap-2 shadow-sm">
+        <i class="bi bi-printer-fill"></i>
+        <span>Print / Save as PDF</span>
+      </button>
+
+      {% if current_user.is_admin %}
+        <a href="{{ url_for('payroll.edit', id=payroll.id) }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-pencil"></i>
+          <span>Edit Record</span>
+        </a>
+      {% endif %}
+
+      <a href="{{ url_for('payroll.history') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left"></i>
+        <span>Back</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Master Printable Payslip Card -->
+  <div class="payslip-wrapper">
+
+    <!-- Header Section -->
+    <div class="payslip-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="bg-primary text-white rounded p-2 d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+            <i class="bi bi-building fs-4"></i>
+          </span>
+          <span class="fs-4 fw-bold tracking-tight">Nexus Enterprise Corp.</span>
+        </div>
+        <p class="small text-light opacity-75 mb-0">
+          742 Evergreen Avenue, Innovation Park, Tech City<br>
+          corporate@nexus-cms.internal &bull; Tel: +1 (800) 555-0199
+        </p>
+      </div>
+
+      <div class="text-sm-end">
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fs-6 mb-1 text-uppercase fw-bold">
+          Official Payslip
+        </span>
+        <div class="small opacity-75 mt-1">Disbursement Ref: <strong>{{ payroll.reference_no or 'PAY-' ~ payroll.year ~ '%02d' % payroll.month ~ '-' ~ '%04d' % payroll.id }}</strong></div>
+        <div class="small opacity-75">Pay Period: <strong class="text-white">{{ payroll.pay_period }}</strong></div>
+      </div>
+    </div>
+
+    <!-- Body Section -->
+    <div class="payslip-body">
+
+      <!-- Employee Information Grid -->
+      <div class="p-3 bg-light rounded-3 border mb-4">
+        <div class="row g-3 small">
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Employee Name</span>
+            <strong class="text-dark fs-6">{{ payroll.employee.full_name }}</strong>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Employee ID</span>
+            <strong class="text-dark font-monospace fs-6">{{ payroll.employee.employee_id }}</strong>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Designation / Title</span>
+            <strong class="text-dark">{{ payroll.employee.job_title }}</strong>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Department</span>
+            <strong class="text-dark">{{ payroll.employee.department.name if payroll.employee.department else 'Unassigned' }}</strong>
+          </div>
+
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Date of Joining</span>
+            <span class="text-dark">{{ payroll.employee.hire_date.strftime('%b %d, %Y') if payroll.employee.hire_date else 'N/A' }}</span>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Payment Method</span>
+            <span class="text-dark">{{ payroll.payment_method }}</span>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Disbursement Date</span>
+            <span class="text-dark">{{ payroll.payment_date.strftime('%B %d, %Y') if payroll.payment_date else 'Pending' }}</span>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Payment Status</span>
+            {% if payroll.status == 'paid' %}
+              <span class="badge bg-success-subtle text-success border border-success px-2 py-1">Disbursed (Paid)</span>
+            {% elif payroll.status == 'processing' %}
+              <span class="badge bg-warning-subtle text-warning border border-warning px-2 py-1">Processing</span>
+            {% else %}
+              <span class="badge bg-secondary-subtle text-secondary px-2 py-1">Pending Approval</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Breakdown: Earnings vs Deductions -->
+      <div class="row g-4 mb-4">
+
+        <!-- Column 1: Earnings -->
+        <div class="col-md-6">
+          <div class="border rounded-3 overflow-hidden h-100">
+            <div class="bg-light px-3 py-2 border-bottom fw-bold text-dark d-flex align-items-center gap-2">
+              <i class="bi bi-plus-circle text-success"></i>
+              <span>Earnings</span>
+            </div>
+            <table class="table table-sm mb-0">
+              <thead class="payslip-table">
+                <tr>
+                  <th class="ps-3">Description</th>
+                  <th class="text-end pe-3">Amount ($)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="ps-3 py-2">
+                    <span class="fw-semibold text-dark">Basic Salary</span>
+                    <div class="small text-muted" style="font-size: 0.72rem;">Structural base pay</div>
+                  </td>
+                  <td class="text-end pe-3 font-monospace align-middle">
+                    ${{ "{:,.2f}".format(payroll.base_salary) }}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="ps-3 py-2">
+                    <span class="fw-semibold text-dark">Incentive / Bonus</span>
+                    {% if payroll.bonus_description %}
+                      <div class="small text-muted" style="font-size: 0.72rem;">{{ payroll.bonus_description }}</div>
+                    {% endif %}
+                  </td>
+                  <td class="text-end pe-3 font-monospace align-middle text-success">
+                    {% if payroll.bonus > 0 %}+${{ "{:,.2f}".format(payroll.bonus) }}{% else %}$0.00{% endif %}
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot class="table-light">
+                <tr class="fw-bold">
+                  <td class="ps-3 py-2">Gross Earnings</td>
+                  <td class="text-end pe-3 font-monospace text-dark">
+                    ${{ "{:,.2f}".format(payroll.gross_earnings) }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Column 2: Deductions -->
+        <div class="col-md-6">
+          <div class="border rounded-3 overflow-hidden h-100">
+            <div class="bg-light px-3 py-2 border-bottom fw-bold text-dark d-flex align-items-center gap-2">
+              <i class="bi bi-dash-circle text-danger"></i>
+              <span>Deductions</span>
+            </div>
+            <table class="table table-sm mb-0">
+              <thead class="payslip-table">
+                <tr>
+                  <th class="ps-3">Description</th>
+                  <th class="text-end pe-3">Amount ($)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="ps-3 py-2">
+                    <span class="fw-semibold text-dark">Withholdings &amp; Deductions</span>
+                    {% if payroll.deduction_description %}
+                      <div class="small text-muted" style="font-size: 0.72rem;">{{ payroll.deduction_description }}</div>
+                    {% else %}
+                      <div class="small text-muted" style="font-size: 0.72rem;">Tax, healthcare, or leave adjustments</div>
+                    {% endif %}
+                  </td>
+                  <td class="text-end pe-3 font-monospace align-middle text-danger">
+                    {% if payroll.deductions > 0 %}-${{ "{:,.2f}".format(payroll.deductions) }}{% else %}$0.00{% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="ps-3 py-2 text-muted fst-italic" style="font-size: 0.75rem;">
+                    Other Statutory Adjustments
+                  </td>
+                  <td class="text-end pe-3 font-monospace align-middle text-muted" style="font-size: 0.75rem;">
+                    $0.00
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot class="table-light">
+                <tr class="fw-bold">
+                  <td class="ps-3 py-2">Total Deductions</td>
+                  <td class="text-end pe-3 font-monospace text-danger">
+                    ${{ "{:,.2f}".format(payroll.deductions) }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Net Salary Card -->
+      <div class="net-pay-banner d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div>
+          <span class="text-success text-uppercase small fw-bold tracking-wide d-block">
+            Take-Home Pay (Net Salary)
+          </span>
+          <div class="small text-muted mt-1">
+            <strong>Formula:</strong> Basic Salary (${{ "{:,.2f}".format(payroll.base_salary) }})
+            + Bonus (${{ "{:,.2f}".format(payroll.bonus) }})
+            - Deductions (${{ "{:,.2f}".format(payroll.deductions) }})
+          </div>
+        </div>
+        <div class="text-sm-end">
+          <span class="display-6 fw-bold text-success font-monospace">${{ "{:,.2f}".format(payroll.net_salary) }}</span>
+          <div class="small text-muted">United States Dollars (USD)</div>
+        </div>
+      </div>
+
+      {% if payroll.notes %}
+        <div class="p-3 bg-light rounded-3 border mb-4 small">
+          <strong class="text-dark d-block mb-1">Administrative Notes:</strong>
+          <span class="text-muted">{{ payroll.notes }}</span>
+        </div>
+      {% endif %}
+
+      <!-- Signatures Block -->
+      <div class="row g-4 pt-3">
+        <div class="col-4">
+          <div class="signature-box">
+            <span class="small fw-semibold text-dark d-block">Prepared By</span>
+            <span class="text-muted" style="font-size: 0.7rem;">Payroll Dept</span>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="signature-box">
+            <span class="small fw-semibold text-dark d-block">Authorized Signatory</span>
+            <span class="text-muted" style="font-size: 0.7rem;">Finance Director</span>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="signature-box">
+            <span class="small fw-semibold text-dark d-block">Employee Signature</span>
+            <span class="text-muted" style="font-size: 0.7rem;">{{ payroll.employee.full_name }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legal footer -->
+      <div class="text-center mt-5 pt-3 border-top text-muted" style="font-size: 0.72rem;">
+        This document is an official computer-generated statement of earnings and disbursements issued by Nexus Enterprise Corp.
+        For inquiries regarding this statement, please contact the Payroll Department.
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+

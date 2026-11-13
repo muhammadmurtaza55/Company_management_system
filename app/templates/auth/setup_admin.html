@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Initialize Administrator Account | Nexus CMS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        
+        <!-- Header -->
+        <div class="card-header bg-dark text-white text-center py-4 border-0">
+          <div class="d-inline-flex align-items-center justify-content-center bg-danger text-white rounded-3 p-3 mb-2 shadow-sm">
+            <i class="bi bi-shield-lock-fill fs-3"></i>
+          </div>
+          <h4 class="fw-bold mb-1">Initial Administrator Setup</h4>
+          <p class="text-secondary small mb-0">No users found in PostgreSQL. Create your initial System Admin account.</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5 bg-white">
+          <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- Username -->
+            <div class="mb-3">
+              <label for="{{ form.username.id }}" class="form-label fw-semibold text-dark small">
+                {{ form.username.label.text }} <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
+                {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+              </div>
+              {% for error in form.username.errors %}
+                <div class="invalid-feedback d-block small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+              <label for="{{ form.email.id }}" class="form-label fw-semibold text-dark small">
+                {{ form.email.label.text }} <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+              </div>
+              {% for error in form.email.errors %}
+                <div class="invalid-feedback d-block small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Password with Show/Hide Toggle -->
+            <div class="mb-3">
+              <label for="{{ form.password.id }}" class="form-label fw-semibold text-dark small">
+                {{ form.password.label.text }} <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-key"></i></span>
+                {{ form.password(class="form-control border-end-0" + (" is-invalid" if form.password.errors else "")) }}
+                <button class="btn btn-outline-secondary border-start-0" type="button" id="toggleAdminPwd" title="Show/Hide password">
+                  <i class="bi bi-eye" id="toggleAdminPwdIcon"></i>
+                </button>
+              </div>
+              <small class="text-muted d-block mt-1">Must be at least 8 characters long.</small>
+              {% for error in form.password.errors %}
+                <div class="invalid-feedback d-block small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="mb-4">
+              <label for="{{ form.confirm_password.id }}" class="form-label fw-semibold text-dark small">
+                {{ form.confirm_password.label.text }} <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-check2-circle"></i></span>
+                {{ form.confirm_password(class="form-control border-end-0" + (" is-invalid" if form.confirm_password.errors else "")) }}
+                <button class="btn btn-outline-secondary border-start-0" type="button" id="toggleAdminConfirmPwd" title="Show/Hide password">
+                  <i class="bi bi-eye" id="toggleAdminConfirmPwdIcon"></i>
+                </button>
+              </div>
+              {% for error in form.confirm_password.errors %}
+                <div class="invalid-feedback d-block small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="d-grid mb-3">
+              <button type="submit" class="btn btn-primary btn-lg shadow-sm fw-semibold d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-shield-check"></i>
+                <span>Create Administrator Account</span>
+              </button>
+            </div>
+
+            <div class="p-3 bg-light rounded-3 border text-center">
+              <small class="text-muted d-block">
+                <i class="bi bi-info-circle me-1 text-primary"></i>
+                Once created, this account will have full access to the <strong>Admin Dashboard</strong>, and public registration will be locked.
+              </small>
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    function setupToggle(btnId, inputId, iconId) {
+      const btn = document.getElementById(btnId);
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (btn && input && icon) {
+        btn.addEventListener('click', () => {
+          const isPwd = input.getAttribute('type') === 'password';
+          input.setAttribute('type', isPwd ? 'text' : 'password');
+          icon.className = isPwd ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+      }
+    }
+
+    setupToggle('toggleAdminPwd', 'adminPassword', 'toggleAdminPwdIcon');
+    setupToggle('toggleAdminConfirmPwd', 'adminConfirmPassword', 'toggleAdminConfirmPwdIcon');
+  });
+</script>
+{% endblock %}
+

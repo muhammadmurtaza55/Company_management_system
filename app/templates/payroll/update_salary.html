@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Set / Adjust Employee Basic Salary{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+
+      <!-- Breadcrumbs -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('payroll.index') }}" class="text-decoration-none text-muted">Payroll</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Set Base Salary</li>
+        </ol>
+      </nav>
+
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <i class="bi bi-currency-dollar text-primary"></i>
+            <span>Set Employee Basic Salary</span>
+          </h5>
+          <p class="text-muted small mb-0">Configure structural base monthly pay rate in the employee database.</p>
+        </div>
+
+        <div class="card-body p-4">
+          <form method="POST" action="{{ url_for('payroll.update_salary') }}" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- Employee Selection -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">{{ form.employee_id.label }} <span class="text-danger">*</span></label>
+              {{ form.employee_id(class="form-select" + (" is-invalid" if form.employee_id.errors else "")) }}
+              {% for err in form.employee_id.errors %}
+                <div class="invalid-feedback">{{ err }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- New Basic Salary -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">{{ form.new_salary.label }} <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light">$</span>
+                {{ form.new_salary(class="form-control font-monospace fs-5" + (" is-invalid" if form.new_salary.errors else ""), step="0.01", placeholder="0.00") }}
+              </div>
+              {% for err in form.new_salary.errors %}
+                <div class="text-danger small mt-1">{{ err }}</div>
+              {% endfor %}
+              <div class="form-text small text-muted">Stored as high-precision Decimal in PostgreSQL.</div>
+            </div>
+
+            <!-- Effective Date -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">{{ form.effective_date.label }}</label>
+              {{ form.effective_date(class="form-control" + (" is-invalid" if form.effective_date.errors else ""), type="date") }}
+              {% for err in form.effective_date.errors %}
+                <div class="invalid-feedback">{{ err }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Justification / Reason -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold text-dark small">{{ form.reason.label }}</label>
+              {{ form.reason(class="form-control" + (" is-invalid" if form.reason.errors else ""), placeholder="e.g. Annual merit increase, promotion, structural revision...") }}
+              {% for err in form.reason.errors %}
+                <div class="invalid-feedback">{{ err }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+              <a href="{{ url_for('payroll.index') }}" class="btn btn-outline-secondary">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+                <i class="bi bi-check-lg"></i>
+                <span>Update Basic Salary</span>
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

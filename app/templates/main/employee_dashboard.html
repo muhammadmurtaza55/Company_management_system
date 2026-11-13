@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Self-Service Portal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Welcome & Profile Banner -->
+  <div class="card border-0 shadow-sm rounded-3 bg-dark text-white p-4 mb-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center fs-3" style="width: 64px; height: 64px;">
+          {{ emp.first_name[0] }}{{ emp.last_name[0] }}
+        </div>
+        <div>
+          <h2 class="h3 fw-bold mb-1">Hello, {{ emp.first_name }}!</h2>
+          <div class="d-flex flex-wrap align-items-center gap-2 small opacity-75">
+            <span class="badge bg-secondary font-monospace">{{ emp.employee_id }}</span>
+            <span>&bull;</span>
+            <span>{{ emp.job_title }}</span>
+            <span>&bull;</span>
+            <span class="text-info fw-semibold">{{ emp.department.name if emp.department else 'Unassigned Dept' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <a href="{{ url_for('attendance.submit_leave') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+          <i class="bi bi-calendar-plus"></i>
+          <span>Apply for Leave</span>
+        </a>
+        <a href="{{ url_for('task.my_tasks') }}" class="btn btn-outline-light btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-kanban"></i>
+          <span>My Tasks</span>
+        </a>
+        <a href="{{ url_for('payroll.index') }}" class="btn btn-outline-light btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-receipt"></i>
+          <span>My Payslips</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Punch Clock Widget -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden border-start border-4 {% if today_attendance and today_attendance.check_out %}border-success{% elif today_attendance and today_attendance.check_in %}border-info{% else %}border-warning{% endif %}">
+    <div class="card-body p-4">
+      <div class="row align-items-center g-3">
+        <div class="col-12 col-md-7">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle {% if today_attendance and today_attendance.check_out %}bg-success-subtle text-success{% elif today_attendance and today_attendance.check_in %}bg-info-subtle text-info{% else %}bg-warning-subtle text-warning{% endif %} d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; font-size: 1.6rem;">
+              {% if today_attendance and today_attendance.check_out %}
+                <i class="bi bi-check2-circle"></i>
+              {% elif today_attendance and today_attendance.check_in %}
+                <i class="bi bi-stopwatch"></i>
+              {% else %}
+                <i class="bi bi-box-arrow-in-right"></i>
+              {% endif %}
+            </div>
+            <div>
+              <h5 class="fw-bold text-dark mb-1">
+                Today's Workday Status:
+                {% if today_attendance and today_attendance.check_out %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">Shift Completed</span>
+                {% elif today_attendance and today_attendance.check_in %}
+                  <span class="badge bg-info-subtle text-info border border-info-subtle">On Duty</span>
+                {% elif today_attendance and today_attendance.status == 'on_leave' %}
+                  <span class="badge bg-warning-subtle text-warning border border-warning-subtle">On Approved Leave</span>
+                {% else %}
+                  <span class="badge bg-light text-muted border">Not Checked In</span>
+                {% endif %}
+              </h5>
+              <p class="text-muted small mb-0">
+                {% if today_attendance and today_attendance.check_out %}
+                  Completed work shift today. Total duration: <strong>{{ today_attendance.work_duration_formatted }}</strong>.
+                {% elif today_attendance and today_attendance.check_in %}
+                  Checked in at <strong>{{ today_attendance.check_in.strftime('%I:%M %p') }}</strong>.
+                  {% if today_attendance.is_late %}<span class="badge bg-warning text-dark ms-1">Late (+{{ today_attendance.minutes_late }}m)</span>{% endif %}
+                {% else %}
+                  Standard expected arrival is <strong>09:30 AM</strong> (Asia/Karachi). Check-ins after 09:30 AM are logged as Late.
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-5 text-md-end">
+          {% if not today_attendance or not today_attendance.check_in %}
+            <form method="POST" action="{{ url_for('attendance.check_in') }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-primary btn-lg shadow-sm px-4 d-flex align-items-center gap-2">
+                <i class="bi bi-box-arrow-in-right fs-5"></i>
+                <span>Check In Now</span>
+              </button>
+            </form>
+          {% elif not today_attendance.check_out %}
+            <form method="POST" action="{{ url_for('attendance.check_out') }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-danger btn-lg shadow-sm px-4 d-flex align-items-center gap-2">
+                <i class="bi bi-box-arrow-right fs-5"></i>
+                <span>Check Out Now</span>
+              </button>
+            </form>
+          {% else %}
+            <span class="badge bg-light text-muted border px-3 py-2 fs-6">
+              <i class="bi bi-check-all text-success me-1"></i>Day Concluded
+            </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Badges -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-success h-100">
+        <span class="text-muted small fw-bold text-uppercase">Present Days</span>
+        <h3 class="fw-bold text-success my-1">{{ days_present }}</h3>
+        <span class="text-muted small">This month ({{ days_late }} late)</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-warning h-100">
+        <span class="text-muted small fw-bold text-uppercase">Active Tasks</span>
+        <h3 class="fw-bold text-warning-emphasis my-1">{{ in_progress_count + pending_count }}</h3>
+        <span class="text-muted small">{{ completed_count }} completed</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-info h-100">
+        <span class="text-muted small fw-bold text-uppercase">Basic Salary (PKR)</span>
+        <h3 class="fw-bold text-dark my-1">{{ (emp.salary or 0)|currency_pkr }}</h3>
+        <span class="text-muted small">Monthly compensation</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-primary h-100">
+        <span class="text-muted small fw-bold text-uppercase">Latest Pay Slip</span>
+        {% if latest_payroll %}
+          <h4 class="fw-bold text-primary my-1">{{ latest_payroll.net_salary|currency_pkr }}</h4>
+          <a href="{{ url_for('payroll.salary_slip', id=latest_payroll.id) }}" class="small text-decoration-none">
+            {{ latest_payroll.pay_period }} &rarr;
+          </a>
+        {% else %}
+          <h5 class="text-muted my-1">Pending</h5>
+          <span class="text-muted small">First cycle awaiting</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Tasks & Leaves Grid -->
+  <div class="row g-4">
+
+    <!-- Left: Assigned Tasks -->
+    <div class="col-12 col-lg-7">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-check2-square text-primary"></i>
+            <span>My Current Assigned Tasks</span>
+          </h6>
+          <a href="{{ url_for('task.my_tasks') }}" class="btn btn-outline-primary btn-sm">Full Task Board</a>
+        </div>
+
+        <div class="card-body p-0">
+          {% if assigned_tasks %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <tbody class="small">
+                  {% for t in assigned_tasks %}
+                    <tr>
+                      <td class="ps-3 py-3">
+                        <div class="fw-bold text-dark">
+                          <a href="{{ url_for('task.detail', id=t.id) }}" class="text-dark text-decoration-none">
+                            {{ t.title }}
+                          </a>
+                        </div>
+                        <div class="text-muted" style="font-size: 0.72rem;">
+                          Priority: <span class="text-capitalize">{{ t.priority }}</span>
+                          {% if t.due_date %} &bull; Due: {{ t.due_date.strftime('%b %d') }}{% endif %}
+                        </div>
+                      </td>
+                      <td>
+                        <span class="badge {{ t.status_badge_class }} text-capitalize" style="font-size: 0.7rem;">
+                          {{ t.status|replace('_', ' ') }}
+                        </span>
+                      </td>
+                      <td class="text-end pe-3">
+                        {% if t.status == 'pending' %}
+                          <form method="POST" action="{{ url_for('task.update_status', id=t.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="status" value="in_progress">
+                            <button type="submit" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 0.75rem;">Start</button>
+                          </form>
+                        {% elif t.status == 'in_progress' %}
+                          <form method="POST" action="{{ url_for('task.update_status', id=t.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="status" value="completed">
+                            <button type="submit" class="btn btn-outline-success btn-sm py-0 px-2" style="font-size: 0.75rem;">Done</button>
+                          </form>
+                        {% else %}
+                          <span class="text-muted" style="font-size: 0.75rem;">Delivered</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="p-4 text-center text-muted">
+              <i class="bi bi-clipboard-check fs-2 text-secondary opacity-50 d-block mb-1"></i>
+              <p class="small mb-0">No active tasks assigned to you currently.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: My Leave Requests -->
+    <div class="col-12 col-lg-5">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-calendar-range text-danger"></i>
+            <span>My Leave Requests</span>
+          </h6>
+          <a href="{{ url_for('attendance.submit_leave') }}" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Apply
+          </a>
+        </div>
+
+        <div class="card-body p-0">
+          {% if my_leaves %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <tbody class="small">
+                  {% for l in my_leaves %}
+                    <tr>
+                      <td class="ps-3 py-3">
+                        <div class="fw-bold text-dark text-capitalize">{{ l.leave_type|replace('_', ' ') }}</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">
+                          {{ l.start_date.strftime('%b %d') }} &rarr; {{ l.end_date.strftime('%b %d, %Y') }} ({{ l.duration_days }}d)
+                        </div>
+                      </td>
+                      <td class="text-end pe-3">
+                        {% if l.status == 'approved' %}
+                          <span class="badge bg-success-subtle text-success border border-success px-2 py-1">Approved</span>
+                        {% elif l.status == 'pending' %}
+                          <span class="badge bg-warning-subtle text-warning border border-warning px-2 py-1">Pending</span>
+                        {% elif l.status == 'rejected' %}
+                          <span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1">Rejected</span>
+                        {% else %}
+                          <span class="badge bg-secondary-subtle text-secondary px-2 py-1">{{ l.status|title }}</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="p-4 text-center text-muted">
+              <p class="small mb-2">No leave applications submitted recently.</p>
+              <a href="{{ url_for('attendance.submit_leave') }}" class="btn btn-outline-danger btn-sm">
+                Apply for Time Off
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+

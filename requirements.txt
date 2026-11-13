@@ -1,0 +1,28 @@
+# ====================================================================
+# Company Management System - Production Dependencies (Render / PaaS)
+# ====================================================================
+
+# Core Web Framework
+Flask>=3.1.0
+Werkzeug>=3.1.0
+
+# Production WSGI Server (Render)
+gunicorn>=23.0.0
+
+# Database & ORM (Strictly PostgreSQL)
+Flask-SQLAlchemy>=3.1.1
+Flask-Migrate>=4.1.0
+SQLAlchemy>=2.0.30
+alembic>=1.13.0
+psycopg[binary]>=3.2.0
+psycopg2-binary>=2.9.9
+
+# Authentication, Forms & CSRF Security
+Flask-Login>=0.6.3
+Flask-WTF>=1.2.0
+WTForms>=3.1.0
+email-validator>=2.1.0
+
+# Configuration, Environment & Timezones
+python-dotenv>=1.0.1
+tzdata>=2024.1

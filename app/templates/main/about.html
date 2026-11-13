@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}System Architecture &amp; Technical Specifications{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="mb-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-1 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Architecture</li>
+      </ol>
+    </nav>
+    <h2 class="fw-bold mb-1"><i class="bi bi-diagram-3 me-2 text-primary"></i>System Architecture &amp; Design</h2>
+    <p class="text-muted mb-0">Engineered with clean separation of concerns and production scalability.</p>
+  </div>
+
+  <!-- Tech Stack Grid -->
+  <div class="row g-4 mb-5">
+    <div class="col-lg-8">
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h5 class="fw-bold mb-0"><i class="bi bi-stack me-2 text-primary"></i>Technology Stack Details</h5>
+        </div>
+        <div class="card-body p-4">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Component</th>
+                  <th>Technology</th>
+                  <th>Version</th>
+                  <th>Purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-bold"><i class="bi bi-cpu me-1 text-primary"></i> Language</td>
+                  <td>Python</td>
+                  <td><span class="badge bg-dark">3.14.10</span></td>
+                  <td>Core application runtime</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold"><i class="bi bi-fire me-1 text-danger"></i> Web Framework</td>
+                  <td>Flask (Application Factory)</td>
+                  <td><span class="badge bg-dark">3.1.3</span></td>
+                  <td>REST routing &amp; request dispatching</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold"><i class="bi bi-database me-1 text-warning"></i> Database Engine</td>
+                  <td>PostgreSQL (Strict)</td>
+                  <td><span class="badge bg-warning text-dark">psycopg 3</span></td>
+                  <td>ACID relational data storage</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold"><i class="bi bi-layers me-1 text-info"></i> ORM Layer</td>
+                  <td>Flask-SQLAlchemy</td>
+                  <td><span class="badge bg-dark">3.1.1</span></td>
+                  <td>Model definitions &amp; query builder</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold"><i class="bi bi-shield-lock me-1 text-success"></i> Auth Engine</td>
+                  <td>Flask-Login &amp; Werkzeug</td>
+                  <td><span class="badge bg-dark">0.6.3</span></td>
+                  <td>Session &amp; password cryptography</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold"><i class="bi bi-bootstrap me-1 text-primary"></i> Presentation</td>
+                  <td>Bootstrap 5 + Icons + CSS3</td>
+                  <td><span class="badge bg-dark">5.3.3</span></td>
+                  <td>Responsive layout &amp; modern UI</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold"><i class="bi bi-cloud-arrow-up me-1 text-success"></i> Deployment</td>
+                  <td>Render &amp; Gunicorn WSGI</td>
+                  <td><span class="badge bg-dark">Procfile</span></td>
+                  <td>Automated continuous cloud hosting</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Project Directory Structure -->
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h5 class="fw-bold mb-0"><i class="bi bi-folder2-open me-2 text-primary"></i>Project File Hierarchy</h5>
+        </div>
+        <div class="card-body p-4">
+          <pre class="code-preview mb-0"><code>Company_managment_system/
+├── app/
+│   ├── blueprints/
+│   │   ├── api/            # JSON REST endpoints (/api/health, /api/db-status)
+│   │   ├── auth/           # Authentication endpoints (login, logout, register)
+│   │   └── main/           # Core routes (dashboard, db-test, about)
+│   ├── models/
+│   │   ├── user.py         # User account &amp; role security
+│   │   ├── department.py   # Corporate department structures
+│   │   ├── employee.py     # Employee personnel profiles
+│   │   └── __init__.py     # Model registry &amp; user loader
+│   ├── static/
+│   │   ├── css/style.css   # Custom CSS design system
+│   │   └── js/main.js      # AJAX diagnostics &amp; DOM reactivity
+│   ├── templates/          # Jinja2 layouts &amp; components
+│   ├── config.py           # Multi-environment configuration
+│   ├── extensions.py       # Decoupled Flask extensions
+│   └── __init__.py         # Application factory (create_app)
+├── .env.example            # Environment configuration template
+├── .gitignore              # Strict ignore rules (no .env, no SQLite)
+├── Procfile                # Render production WSGI command
+├── requirements.txt        # Production dependencies
+├── run.py                  # Local entrypoint and server runner
+└── README.md               # Complete setup and deployment guide</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Security & Standards -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h6 class="fw-bold mb-0"><i class="bi bi-shield-check me-2 text-success"></i>Architectural Standards</h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="roadmap-step active">
+            <h6 class="fw-bold mb-1">Strict PostgreSQL Compliance</h6>
+            <p class="small text-muted mb-0">No SQLite or MySQL fallbacks. Built natively for PostgreSQL relational integrity.</p>
+          </div>
+          <div class="roadmap-step active">
+            <h6 class="fw-bold mb-1">Zero Secret Hardcoding</h6>
+            <p class="small text-muted mb-0">All secrets, credentials, and connection strings load from environment variables.</p>
+          </div>
+          <div class="roadmap-step active">
+            <h6 class="fw-bold mb-1">Blueprint Modularity</h6>
+            <p class="small text-muted mb-0">Independent routing namespaces enable parallel feature expansion without merge collisions.</p>
+          </div>
+          <div class="roadmap-step">
+            <h6 class="fw-bold mb-1">Upcoming Module 2</h6>
+            <p class="small text-muted mb-0">Full Flask-Login session management, user registration, and RBAC authentication.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0 bg-primary text-white">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-2"><i class="bi bi-lightbulb me-2"></i>Next Steps</h5>
+          <p class="small text-light opacity-75 mb-3">
+            Once Phase 1 is reviewed and approved, we will proceed to Module 2 to build authentication forms, login pages, and user management.
+          </p>
+          <a href="{{ url_for('main.db_test') }}" class="btn btn-light btn-sm fw-semibold">
+            <i class="bi bi-database me-1"></i> Verify Database Status
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

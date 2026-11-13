@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Compliance &amp; Punctuality Report{% endblock %}
+
+{% block extra_css %}
+<style>
+  @media print {
+    nav.navbar, footer.footer, .no-print, .breadcrumb, .alert { display: none !important; }
+    body { background-color: #fff !important; }
+    .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 no-print">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('report.index') }}" class="text-decoration-none text-muted">Reports</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Attendance</li>
+        </ol>
+      </nav>
+      <h2 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-calendar-check text-warning"></i>
+        <span>Attendance Compliance &amp; Punctuality Report</span>
+      </h2>
+      <p class="text-muted mb-0">Punctuality audit from {{ from_date.strftime('%b %d, %Y') }} to {{ to_date.strftime('%b %d, %Y') }}. Threshold: 09:30 AM.</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <button onclick="window.print()" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+        <i class="bi bi-printer-fill"></i>
+        <span>Print Report</span>
+      </button>
+      <a href="{{ url_for('report.export_attendance_csv', from_date=from_date.isoformat(), to_date=to_date.isoformat(), department_id=selected_dept_id) }}" class="btn btn-outline-success btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-file-earmark-spreadsheet"></i>
+        <span>Export CSV</span>
+      </a>
+      <a href="{{ url_for('report.index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Hub
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter Card (Hidden in Print) -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4 no-print">
+    <div class="card-body p-3">
+      <form method="GET" action="{{ url_for('report.attendance_report') }}" class="row g-2 align-items-end">
+        <div class="col-6 col-md-3">
+          <label class="form-label small fw-semibold text-muted mb-1">From Date</label>
+          <input type="date" name="from_date" class="form-control form-control-sm" value="{{ from_date.strftime('%Y-%m-%d') }}">
+        </div>
+
+        <div class="col-6 col-md-3">
+          <label class="form-label small fw-semibold text-muted mb-1">To Date</label>
+          <input type="date" name="to_date" class="form-control form-control-sm" value="{{ to_date.strftime('%Y-%m-%d') }}">
+        </div>
+
+        {% if current_user.is_admin %}
+          <div class="col-6 col-md-3">
+            <label class="form-label small fw-semibold text-muted mb-1">Department</label>
+            <select name="department_id" class="form-select form-select-sm">
+              <option value="0">All Departments</option>
+              {% for d in departments %}
+                <option value="{{ d.id }}" {% if d.id == selected_dept_id %}selected{% endif %}>{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+
+        <div class="col-6 col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="bi bi-funnel-fill me-1"></i>Filter
+          </button>
+          <a href="{{ url_for('report.attendance_report') }}" class="btn btn-light btn-sm text-muted border" title="Reset">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Metric Badges -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-success h-100 text-center">
+        <span class="text-muted small fw-bold text-uppercase">On-Time / Present</span>
+        <h3 class="fw-bold text-success my-1">{{ counts.present }}</h3>
+        <span class="text-success small">Logged &le; 09:30 AM</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-warning h-100 text-center">
+        <span class="text-muted small fw-bold text-uppercase">Late Arrivals</span>
+        <h3 class="fw-bold text-warning my-1">{{ counts.late }}</h3>
+        <span class="text-muted small">Checked in &gt; 09:30 AM</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-info h-100 text-center">
+        <span class="text-muted small fw-bold text-uppercase">Approved Leave</span>
+        <h3 class="fw-bold text-info my-1">{{ counts.on_leave }}</h3>
+        <span class="text-muted small">Excused days</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-danger h-100 text-center">
+        <span class="text-muted small fw-bold text-uppercase">Recorded Absences</span>
+        <h3 class="fw-bold text-danger my-1">{{ counts.absent }}</h3>
+        <span class="text-muted small">Unexcused</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Table -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light text-muted small text-uppercase">
+          <tr>
+            <th>Date</th>
+            <th>Employee</th>
+            <th>Department</th>
+            <th>Check-In</th>
+            <th>Check-Out</th>
+            <th>Duration</th>
+            <th class="text-center">Status</th>
+            <th class="pe-3">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+            <tr>
+              <td>
+                <span class="fw-bold text-dark">{{ r.date.strftime('%b %d, %Y') }}</span>
+                <div class="small text-muted">{{ r.date.strftime('%A') }}</div>
+              </td>
+              <td>
+                <span class="fw-bold text-dark">{{ r.employee.full_name }}</span>
+                <div class="small text-muted font-monospace">{{ r.employee.employee_id }}</div>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">
+                  {{ r.employee.department.name if r.employee.department else 'Unassigned' }}
+                </span>
+              </td>
+              <td class="font-monospace small">
+                {% if r.check_in %}
+                  <span class="{% if r.is_late %}text-warning fw-bold{% else %}text-dark{% endif %}">
+                    {{ r.check_in.strftime('%I:%M %p') }}
+                  </span>
+                {% else %}
+                  <span class="text-muted">--</span>
+                {% endif %}
+              </td>
+              <td class="font-monospace small">
+                {{ r.check_out.strftime('%I:%M %p') if r.check_out else '--' }}
+              </td>
+              <td class="font-monospace small">{{ r.work_duration_formatted }}</td>
+              <td class="text-center">
+                {% if r.status == 'present' %}
+                  <span class="badge bg-success-subtle text-success border border-success px-2 py-1">Present</span>
+                {% elif r.status == 'late' %}
+                  <span class="badge bg-warning-subtle text-warning border border-warning px-2 py-1">Late (+{{ r.minutes_late }}m)</span>
+                {% elif r.status == 'on_leave' %}
+                  <span class="badge bg-info-subtle text-info border border-info px-2 py-1">On Leave</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger px-2 py-1">Absent</span>
+                {% endif %}
+              </td>
+              <td class="pe-3 small text-muted">{{ r.notes or '--' }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">No attendance logs found for this date range.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

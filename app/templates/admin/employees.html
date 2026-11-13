@@ -1,0 +1,164 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Employee Directory | Nexus CMS{% endblock %}
+{% block page_title %}Employee Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">Employee Directory</h3>
+      <p class="text-muted small mb-0">View staff records, job titles, department assignments, and compensation.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('employee.index') }}" class="btn btn-outline-primary d-flex align-items-center gap-2">
+        <i class="bi bi-folder2-open"></i>
+        <span>Advanced Directory</span>
+      </a>
+      <a href="{{ url_for('employee.create') }}" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+        <i class="bi bi-person-plus-fill"></i>
+        <span>Add New Employee</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Employee Table Card -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+      <span class="fw-semibold text-dark"><i class="bi bi-people-fill text-primary me-2"></i>All Staff Members</span>
+      <span class="badge bg-secondary">{{ employees|length }} Total</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" style="width: 60px;">ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Job Title</th>
+            <th scope="col">Department</th>
+            <th scope="col">Salary ($/mo)</th>
+            <th scope="col">Status</th>
+            <th scope="col">Hire Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for emp in employees %}
+            <tr>
+              <td class="font-monospace text-muted small">#{{ emp.id }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-circle bg-light border fw-bold text-primary d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                    {{ emp.first_name[0] }}{{ emp.last_name[0] }}
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark">{{ emp.full_name }}</div>
+                    {% if emp.user %}
+                      <div class="text-muted small" style="font-size: 0.75rem;">Account: @{{ emp.user.username }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+              <td class="text-dark">{{ emp.job_title }}</td>
+              <td>
+                {% if emp.department %}
+                  <span class="badge bg-info-subtle text-info border border-info">
+                    {{ emp.department.name }}
+                  </span>
+                {% else %}
+                  <span class="text-muted small fst-italic">None</span>
+                {% endif %}
+              </td>
+              <td class="fw-semibold text-dark">
+                {{ "${:,.2f}".format(emp.salary) if emp.salary else "$0.00" }}
+              </td>
+              <td>
+                {% if emp.status == 'active' %}
+                  <span class="badge bg-success-subtle text-success border border-success">Active</span>
+                {% elif emp.status == 'on_leave' %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning">On Leave</span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary border border-secondary">Terminated</span>
+                {% endif %}
+              </td>
+              <td class="text-muted small">
+                {{ emp.hire_date.strftime('%b %d, %Y') if emp.hire_date else 'N/A' }}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="bi bi-people text-secondary opacity-50 mb-2" style="font-size: 2.5rem; display: block;"></i>
+                <h6 class="fw-bold text-secondary mb-1">No Employees in Database</h6>
+                <p class="small mb-3">Add your first employee record to populate the company directory.</p>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                  <i class="bi bi-person-plus-fill me-1"></i> Add Employee
+                </button>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Employee Modal -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold" id="addEmployeeModalLabel">
+          <i class="bi bi-person-plus-fill me-2 text-primary"></i>Add New Employee
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="POST" action="{{ url_for('admin.employees') }}">
+        {{ form.hidden_tag() }}
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-dark">{{ form.first_name.label.text }} *</label>
+              {{ form.first_name(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-dark">{{ form.last_name.label.text }} *</label>
+              {{ form.last_name(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-dark">{{ form.job_title.label.text }} *</label>
+              {{ form.job_title(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-dark">{{ form.department_id.label.text }}</label>
+              {{ form.department_id(class="form-select") }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-dark">{{ form.salary.label.text }}</label>
+              {{ form.salary(class="form-control") }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-dark">{{ form.hire_date.label.text }}</label>
+              {{ form.hire_date(class="form-control", type="date") }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-dark">{{ form.status.label.text }}</label>
+              {{ form.status(class="form-select") }}
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Employee</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

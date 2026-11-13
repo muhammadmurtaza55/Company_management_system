@@ -1,0 +1,470 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ department.name }} ({{ department.code }}) | Department{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumbs & Quick Back -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('department.index') }}" class="text-decoration-none text-muted">Departments</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ department.name }}</li>
+      </ol>
+    </nav>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('department.index') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left"></i>
+        <span>All Departments</span>
+      </a>
+      {% if current_user.is_admin %}
+        <a href="{{ url_for('department.edit', id=department.id) }}" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-pencil-square"></i>
+          <span>Edit</span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Department Hero Banner Card -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden mb-4">
+    <div class="card-body p-4">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-primary bg-opacity-10 text-primary fw-bold d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px; font-size: 1.6rem;">
+            <i class="bi bi-building"></i>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <h2 class="h3 fw-bold text-dark mb-0">{{ department.name }}</h2>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fs-6 px-2 py-1">
+                {{ department.code }}
+              </span>
+              <span class="badge bg-secondary-subtle text-secondary">
+                Created {{ department.created_at.strftime('%b %d, %Y') if department.created_at else '' }}
+              </span>
+            </div>
+            <p class="text-muted mb-0 mt-1">
+              {{ department.description or 'No departmental description registered.' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Quick Actions (Admin) -->
+        {% if current_user.is_admin %}
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button class="btn btn-primary btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#assignEmployeeModal">
+              <i class="bi bi-person-plus-fill"></i>
+              <span>Assign Staff</span>
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1"
+                    onclick="openDeleteDeptModal('{{ department.id }}', '{{ department.name }}', '{{ department.code }}', {{ department.total_employees }})">
+              <i class="bi bi-trash3-fill"></i>
+              <span>Delete Department</span>
+            </button>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Department-wise Statistics Cards (6 Key KPIs) -->
+  <div class="row g-3 mb-4">
+    
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 text-center bg-white border-top border-4 border-primary">
+        <span class="text-muted small fw-bold text-uppercase">Total Staff</span>
+        <h3 class="fw-bold text-dark my-1">{{ stats.total_employees }}</h3>
+        <span class="text-muted small">Members</span>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 text-center bg-white border-top border-4 border-success">
+        <span class="text-muted small fw-bold text-uppercase">Active</span>
+        <h3 class="fw-bold text-success my-1">{{ stats.active_employees }}</h3>
+        <span class="text-success small">On Duty</span>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 text-center bg-white border-top border-4 border-warning">
+        <span class="text-muted small fw-bold text-uppercase">On Leave</span>
+        <h3 class="fw-bold text-warning my-1">{{ stats.on_leave }}</h3>
+        <span class="text-warning small">Temporary</span>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 text-center bg-white border-top border-4 border-secondary">
+        <span class="text-muted small fw-bold text-uppercase">Terminated</span>
+        <h3 class="fw-bold text-secondary my-1">{{ stats.terminated }}</h3>
+        <span class="text-muted small">Former</span>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 text-center bg-white border-top border-4 border-info">
+        <span class="text-muted small fw-bold text-uppercase">Salary Total</span>
+        <h4 class="fw-bold text-dark my-1 font-monospace" style="font-size: 1.25rem;">
+          ${{ "{:,.0f}".format(stats.total_salary_expense) }}
+        </h4>
+        <span class="text-muted small">/month</span>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 text-center bg-white border-top border-4 border-dark">
+        <span class="text-muted small fw-bold text-uppercase">Avg Salary</span>
+        <h4 class="fw-bold text-dark my-1 font-monospace" style="font-size: 1.25rem;">
+          ${{ "{:,.0f}".format(stats.average_salary) }}
+        </h4>
+        <span class="text-muted small">/employee</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="row g-4 mb-4">
+    
+    <!-- Department Manager Profile Card -->
+    <div class="col-12 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+          <span class="fw-bold text-dark fs-6 d-flex align-items-center gap-2">
+            <i class="bi bi-person-badge-fill text-primary"></i>
+            <span>Department Manager</span>
+          </span>
+          {% if current_user.is_admin %}
+            <a href="{{ url_for('department.edit', id=department.id) }}" class="small text-decoration-none" title="Change or assign manager">
+              Change
+            </a>
+          {% endif %}
+        </div>
+        <div class="card-body p-4">
+          {% if department.manager %}
+            <div class="text-center mb-3">
+              <div class="rounded-circle bg-primary text-white fw-bold d-inline-flex align-items-center justify-content-center shadow-sm mb-2" style="width: 64px; height: 64px; font-size: 1.5rem;">
+                {{ department.manager.first_name[0]|upper }}{{ department.manager.last_name[0]|upper }}
+              </div>
+              <h5 class="fw-bold text-dark mb-0">{{ department.manager.full_name }}</h5>
+              <div class="badge bg-light text-dark border font-monospace mt-1">{{ department.manager.employee_id }}</div>
+              <div class="text-muted small mt-1">{{ department.manager.job_title }}</div>
+            </div>
+
+            <ul class="list-unstyled small mb-0 d-flex flex-column gap-2 border-top pt-3">
+              <li class="d-flex align-items-center gap-2">
+                <i class="bi bi-envelope text-muted"></i>
+                <a href="mailto:{{ department.manager.email }}" class="text-decoration-none text-dark">{{ department.manager.email }}</a>
+              </li>
+              {% if department.manager.phone %}
+                <li class="d-flex align-items-center gap-2">
+                  <i class="bi bi-telephone text-muted"></i>
+                  <span>{{ department.manager.phone }}</span>
+                </li>
+              {% endif %}
+              <li class="d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill text-success"></i>
+                <span>Status: <strong class="text-capitalize">{{ department.manager.status }}</strong></span>
+              </li>
+            </ul>
+
+            <div class="mt-3 pt-2 text-center">
+              <a href="{{ url_for('employee.detail', id=department.manager.id) }}" class="btn btn-outline-primary btn-sm w-100">
+                <i class="bi bi-person-lines-fill me-1"></i> View Full Manager Profile
+              </a>
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted">
+              <div class="rounded-circle bg-warning-subtle text-warning d-inline-flex align-items-center justify-content-center mb-2" style="width: 56px; height: 56px;">
+                <i class="bi bi-person-x-fill fs-3"></i>
+              </div>
+              <h6 class="fw-bold text-dark mb-1">No Manager Assigned</h6>
+              <p class="small text-muted mb-3">Assign a qualified staff member to lead this department.</p>
+              {% if current_user.is_admin %}
+                <a href="{{ url_for('department.edit', id=department.id) }}" class="btn btn-warning btn-sm">
+                  <i class="bi bi-person-plus-fill me-1"></i> Assign Department Manager
+                </a>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Department Employees Roster -->
+    <div class="col-12 col-lg-8">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+          <span class="fw-bold text-dark fs-6 d-flex align-items-center gap-2">
+            <i class="bi bi-people-fill text-info"></i>
+            <span>Department Staff Roster</span>
+            <span class="badge bg-secondary-subtle text-secondary ms-1">{{ employees|length }}</span>
+          </span>
+          {% if current_user.is_admin %}
+            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignEmployeeModal">
+              <i class="bi bi-plus-lg me-1"></i> Add Staff Member
+            </button>
+          {% endif %}
+        </div>
+
+        <div class="card-body p-0">
+          {% if employees and employees|length > 0 %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-uppercase small text-muted">
+                  <tr>
+                    <th scope="col" class="ps-4">Employee</th>
+                    <th scope="col">Job Title</th>
+                    <th scope="col">Base Salary</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" class="text-end pe-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for emp in employees %}
+                    <tr>
+                      <!-- Employee -->
+                      <td class="ps-4 py-3">
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="rounded-circle bg-light border fw-bold text-primary d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; font-size: 0.85rem;">
+                            {{ emp.first_name[0]|upper }}{{ emp.last_name[0]|upper }}
+                          </div>
+                          <div>
+                            <a href="{{ url_for('employee.detail', id=emp.id) }}" class="fw-bold text-dark text-decoration-none hover-primary">
+                              {{ emp.full_name }}
+                            </a>
+                            <div class="small text-muted font-monospace" style="font-size: 0.72rem;">
+                              {{ emp.employee_id }}
+                              {% if department.manager_id == emp.id %}
+                                <span class="badge bg-primary-subtle text-primary ms-1" style="font-size: 0.65rem;">Head</span>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <!-- Job Title -->
+                      <td>
+                        <div class="text-dark small fw-medium">{{ emp.job_title }}</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">{{ emp.email }}</div>
+                      </td>
+
+                      <!-- Salary -->
+                      <td>
+                        <span class="fw-semibold text-dark font-monospace small">
+                          ${{ "{:,.2f}".format(emp.salary or 0) }}
+                        </span>
+                      </td>
+
+                      <!-- Status -->
+                      <td>
+                        {% if emp.status == 'active' %}
+                          <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.72rem;">Active</span>
+                        {% elif emp.status == 'on_leave' %}
+                          <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size: 0.72rem;">On Leave</span>
+                        {% else %}
+                          <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.72rem;">{{ emp.status|capitalize }}</span>
+                        {% endif %}
+                      </td>
+
+                      <!-- Actions -->
+                      <td class="text-end pe-4">
+                        <div class="btn-group btn-group-sm">
+                          <a href="{{ url_for('employee.detail', id=emp.id) }}" class="btn btn-outline-primary" title="View Profile">
+                            <i class="bi bi-eye"></i>
+                          </a>
+                          {% if current_user.is_admin %}
+                            <button type="button" class="btn btn-outline-danger" 
+                                    onclick="openRemoveStaffModal('{{ department.id }}', '{{ emp.id }}', '{{ emp.full_name }}')"
+                                    title="Remove from Department">
+                              <i class="bi bi-person-dash"></i>
+                            </button>
+                          {% endif %}
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-people text-secondary opacity-50 mb-2" style="font-size: 2.5rem; display: block;"></i>
+              <h6 class="fw-bold text-secondary mb-1">No Staff Assigned Yet</h6>
+              <p class="small mb-3">Allocate employees to this department to build its workforce.</p>
+              {% if current_user.is_admin %}
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignEmployeeModal">
+                  <i class="bi bi-person-plus-fill me-1"></i> Assign Employees
+                </button>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Assign Employee Modal (Admin Only) -->
+{% if current_user.is_admin and assign_form %}
+  <div class="modal fade" id="assignEmployeeModal" tabindex="-1" aria-labelledby="assignEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold" id="assignEmployeeModalLabel">
+            <i class="bi bi-person-plus-fill me-2"></i>Assign Employee to {{ department.name }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="POST" action="{{ url_for('department.assign_employee', id=department.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-dark">Select Employee</label>
+              <select name="employee_id" class="form-select" required>
+                {% for val, label in assign_form.employee_id.choices %}
+                  <option value="{{ val }}" {% if val == 0 %}disabled selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text small">Select an unassigned employee or transfer an employee from another department.</div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check2-circle me-1"></i> Confirm Assignment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Remove Staff Confirmation Modal (Admin Only) -->
+{% if current_user.is_admin %}
+  <div class="modal fade" id="removeStaffModal" tabindex="-1" aria-labelledby="removeStaffModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title fw-bold" id="removeStaffModalLabel">
+            <i class="bi bi-person-dash me-2"></i>Remove Staff Member
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="removeStaffForm" method="POST" action="">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+          <div class="modal-body p-4">
+            <p class="mb-2">Are you sure you want to remove <strong id="removeStaffName">Employee</strong> from <strong>{{ department.name }}</strong>?</p>
+            <div class="small text-muted">The employee will remain in the company database as an unassigned staff member.</div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-warning">
+              <i class="bi bi-person-dash me-1"></i> Unassign Employee
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Department Modal -->
+  <div class="modal fade" id="deleteDeptModal" tabindex="-1" aria-labelledby="deleteDeptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title d-flex align-items-center gap-2" id="deleteDeptModalLabel">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Confirm Department Deletion</span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="deleteDeptForm" method="POST" action="">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+          <div class="modal-body p-4">
+            
+            <div id="hasEmployeesWarning" class="alert alert-danger d-none mb-3">
+              <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-slash-circle-fill fs-4 flex-shrink-0"></i>
+                <div>
+                  <strong class="d-block mb-1">Deletion Blocked!</strong>
+                  <span>This department currently has <strong id="modalEmpCount">0</strong> staff member(s) assigned. Accidental deletion is prevented. Please reassign or remove all employees before deleting.</span>
+                </div>
+              </div>
+            </div>
+
+            <div id="canDeleteNotice">
+              <p class="mb-2">Are you sure you want to permanently delete the department:</p>
+              <div class="alert alert-light border d-flex align-items-center gap-3 py-2 mb-3">
+                <div class="rounded-circle bg-danger-subtle text-danger fw-bold d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                  <i class="bi bi-building-x"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-dark" id="modalDeptName">Department Name</div>
+                  <div class="small text-muted font-monospace" id="modalDeptCode">CODE</div>
+                </div>
+              </div>
+              <div class="small text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                This action is permanent and cannot be reversed.
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" id="modalDeleteBtn" class="btn btn-danger d-flex align-items-center gap-1">
+              <i class="bi bi-trash3-fill"></i>
+              <span>Permanently Delete</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openRemoveStaffModal(deptId, empId, empName) {
+      const modal = new bootstrap.Modal(document.getElementById('removeStaffModal'));
+      document.getElementById('removeStaffName').textContent = empName;
+      const form = document.getElementById('removeStaffForm');
+      form.action = "{{ url_for('department.remove_employee', id=0, employee_id=0) }}"
+        .replace('/0/remove-employee/0', '/' + deptId + '/remove-employee/' + empId);
+      modal.show();
+    }
+
+    function openDeleteDeptModal(id, name, code, empCount) {
+      const modal = new bootstrap.Modal(document.getElementById('deleteDeptModal'));
+      document.getElementById('modalDeptName').textContent = name;
+      document.getElementById('modalDeptCode').textContent = code;
+      const form = document.getElementById('deleteDeptForm');
+      form.action = "{{ url_for('department.delete', id=0) }}".replace('/0/delete', '/' + id + '/delete');
+
+      const warningEl = document.getElementById('hasEmployeesWarning');
+      const noticeEl = document.getElementById('canDeleteNotice');
+      const deleteBtn = document.getElementById('modalDeleteBtn');
+
+      if (empCount > 0) {
+        warningEl.classList.remove('d-none');
+        document.getElementById('modalEmpCount').textContent = empCount;
+        noticeEl.classList.add('d-none');
+        deleteBtn.disabled = true;
+      } else {
+        warningEl.classList.add('d-none');
+        noticeEl.classList.remove('d-none');
+        deleteBtn.disabled = false;
+      }
+
+      modal.show();
+    }
+  </script>
+{% endif %}
+
+{% endblock %}
+

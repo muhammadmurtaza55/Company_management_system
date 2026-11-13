@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Log Manual Attendance Record{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+
+      <!-- Breadcrumbs -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('attendance.index') }}" class="text-decoration-none text-muted">Attendance</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Manual Entry</li>
+        </ol>
+      </nav>
+
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <i class="bi bi-pencil-square text-primary"></i>
+            <span>Log / Adjust Attendance Record</span>
+          </h5>
+          <p class="text-muted small mb-0">Administrator interface for adjusting attendance entries or recording manual check-ins.</p>
+        </div>
+
+        <div class="card-body p-4">
+          <form method="POST" action="{{ url_for('attendance.manual_entry') }}" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- Employee -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">{{ form.employee_id.label }} <span class="text-danger">*</span></label>
+              {{ form.employee_id(class="form-select" + (" is-invalid" if form.employee_id.errors else "")) }}
+              {% for error in form.employee_id.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Date & Status -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.date.label }} <span class="text-danger">*</span></label>
+                {{ form.date(class="form-control" + (" is-invalid" if form.date.errors else ""), type="date") }}
+                {% for error in form.date.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.status.label }} <span class="text-danger">*</span></label>
+                {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                {% for error in form.status.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Check-in & Check-out -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.check_in.label }}</label>
+                {{ form.check_in(class="form-control" + (" is-invalid" if form.check_in.errors else ""), type="time") }}
+                {% for error in form.check_in.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.check_out.label }}</label>
+                {{ form.check_out(class="form-control" + (" is-invalid" if form.check_out.errors else ""), type="time") }}
+                {% for error in form.check_out.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold text-dark small">{{ form.notes.label }}</label>
+              {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows="3", placeholder="Optional reason or adjustment notes...") }}
+              {% for error in form.notes.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between gap-2 pt-2 border-top">
+              <a href="{{ url_for('attendance.history') }}" class="btn btn-outline-secondary">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-primary d-flex align-items-center gap-2">
+                <i class="bi bi-save"></i>
+                <span>Save Record</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

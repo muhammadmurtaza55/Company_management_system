@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance History{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumbs & Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('attendance.index') }}" class="text-decoration-none text-muted">Attendance</a></li>
+          <li class="breadcrumb-item active" aria-current="page">History</li>
+        </ol>
+      </nav>
+      <h2 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-clock-history text-primary"></i>
+        <span>Attendance History Logs</span>
+      </h2>
+      <p class="text-muted mb-0">
+        Review daily records, check-in timestamps, working durations, and attendance statuses.
+      </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-secondary d-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left"></i>
+        <span>Attendance Hub</span>
+      </a>
+      {% if current_user.is_admin %}
+        <a href="{{ url_for('attendance.manual_entry') }}" class="btn btn-primary d-flex align-items-center gap-1">
+          <i class="bi bi-plus-lg"></i>
+          <span>Log Record</span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Filter Card -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3 p-md-4">
+      <form method="GET" action="{{ url_for('attendance.history') }}" class="row g-3 align-items-end">
+        
+        {% if current_user.is_admin or current_user.is_manager %}
+          <div class="col-12 col-md-3">
+            <label class="form-label small fw-semibold text-muted mb-1">Employee</label>
+            <select name="employee_id" class="form-select">
+              <option value="0">All Staff Members</option>
+              {% for e in employee_choices %}
+                <option value="{{ e.id }}" {% if active_filters.employee_id == e.id %}selected{% endif %}>
+                  {{ e.full_name }} ({{ e.employee_id }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+
+        <div class="col-12 col-sm-6 col-md-{{ '3' if current_user.is_admin or current_user.is_manager else '4' }}">
+          <label class="form-label small fw-semibold text-muted mb-1">Status</label>
+          <select name="status" class="form-select">
+            <option value="" {% if not active_filters.status %}selected{% endif %}>All Statuses</option>
+            <option value="present" {% if active_filters.status == 'present' %}selected{% endif %}>Present</option>
+            <option value="late" {% if active_filters.status == 'late' %}selected{% endif %}>Late Arrival</option>
+            <option value="half_day" {% if active_filters.status == 'half_day' %}selected{% endif %}>Half Day</option>
+            <option value="on_leave" {% if active_filters.status == 'on_leave' %}selected{% endif %}>On Leave</option>
+            <option value="absent" {% if active_filters.status == 'absent' %}selected{% endif %}>Absent</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-sm-6 col-md-{{ '2' if current_user.is_admin or current_user.is_manager else '3' }}">
+          <label class="form-label small fw-semibold text-muted mb-1">From Date</label>
+          <input type="date" name="from_date" class="form-control" value="{{ active_filters.from_date }}">
+        </div>
+
+        <div class="col-12 col-sm-6 col-md-{{ '2' if current_user.is_admin or current_user.is_manager else '3' }}">
+          <label class="form-label small fw-semibold text-muted mb-1">To Date</label>
+          <input type="date" name="to_date" class="form-control" value="{{ active_filters.to_date }}">
+        </div>
+
+        <div class="col-12 col-sm-6 col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-dark d-flex align-items-center gap-1 flex-grow-1">
+            <i class="bi bi-funnel"></i>
+            <span>Filter</span>
+          </button>
+          <a href="{{ url_for('attendance.history') }}" class="btn btn-outline-secondary" title="Reset filters">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Records Table Card -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+      <span class="fw-bold text-dark fs-6 d-flex align-items-center gap-2">
+        <i class="bi bi-table text-primary"></i>
+        <span>Attendance Records</span>
+        {% if pagination %}
+          <span class="badge bg-secondary-subtle text-secondary">{{ pagination.total }} Total</span>
+        {% endif %}
+      </span>
+      {% if active_filters.status or active_filters.employee_id or active_filters.from_date %}
+        <span class="badge bg-info-subtle text-info border border-info-subtle">Filtered</span>
+      {% endif %}
+    </div>
+
+    <div class="card-body p-0">
+      {% if records and records|length > 0 %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-uppercase small text-muted">
+              <tr>
+                <th scope="col" class="ps-4">Date</th>
+                <th scope="col">Employee</th>
+                <th scope="col">Check In</th>
+                <th scope="col">Check Out</th>
+                <th scope="col">Duration</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="pe-4">Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rec in records %}
+                <tr>
+                  <td class="ps-4 py-3 fw-bold text-dark font-monospace small">
+                    {{ rec.date.strftime('%b %d, %Y (%a)') }}
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="rounded-circle bg-light border fw-bold text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.75rem;">
+                        {{ rec.employee.first_name[0] }}{{ rec.employee.last_name[0] }}
+                      </div>
+                      <div>
+                        <div class="fw-semibold text-dark">{{ rec.employee.full_name }}</div>
+                        <div class="small text-muted font-monospace" style="font-size: 0.72rem;">{{ rec.employee.employee_id }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="font-monospace small">
+                    {% if rec.check_in %}
+                      <span class="fw-bold text-dark">{{ rec.check_in.strftime('%I:%M %p') }}</span>
+                    {% else %}
+                      <span class="text-muted">--</span>
+                    {% endif %}
+                  </td>
+                  <td class="font-monospace small">
+                    {% if rec.check_out %}
+                      <span class="fw-bold text-dark">{{ rec.check_out.strftime('%I:%M %p') }}</span>
+                    {% else %}
+                      <span class="text-muted">--</span>
+                    {% endif %}
+                  </td>
+                  <td class="font-monospace small fw-semibold text-dark">
+                    {{ rec.work_duration_formatted }}
+                  </td>
+                  <td>
+                    {% if rec.status == 'present' %}
+                      <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Present</span>
+                    {% elif rec.status == 'late' %}
+                      <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">Late ({{ rec.minutes_late }}m)</span>
+                    {% elif rec.status == 'on_leave' %}
+                      <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">On Leave</span>
+                    {% elif rec.status == 'absent' %}
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Absent</span>
+                    {% else %}
+                      <span class="badge bg-secondary-subtle text-secondary px-2 py-1">{{ rec.status|capitalize }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="pe-4 small text-muted text-truncate" style="max-width: 250px;">
+                    {{ rec.notes or '--' }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination and pagination.pages > 1 %}
+          <div class="card-footer bg-white py-3 px-4 border-top d-flex justify-content-between align-items-center">
+            <div class="small text-muted">
+              Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} records)
+            </div>
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item {{ 'disabled' if not pagination.has_prev else '' }}">
+                <a class="page-link" href="{{ url_for('attendance.history', page=pagination.prev_num, **active_filters) }}">Prev</a>
+              </li>
+              {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if p %}
+                  <li class="page-item {{ 'active' if p == pagination.page else '' }}">
+                    <a class="page-link" href="{{ url_for('attendance.history', page=p, **active_filters) }}">{{ p }}</a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {{ 'disabled' if not pagination.has_next else '' }}">
+                <a class="page-link" href="{{ url_for('attendance.history', page=pagination.next_num, **active_filters) }}">Next</a>
+              </li>
+            </ul>
+          </div>
+        {% endif %}
+
+      {% else %}
+        <div class="p-5 text-center text-muted">
+          <i class="bi bi-calendar-x fs-1 opacity-50 d-block mb-2"></i>
+          <h6 class="fw-bold text-dark">No Attendance Records Found</h6>
+          <p class="small text-muted mb-0">Try adjusting your filters or date range.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

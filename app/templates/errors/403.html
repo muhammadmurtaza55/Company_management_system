@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Access Denied (403 Forbidden){% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+      <div class="mb-4">
+        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger bg-opacity-10 text-danger p-4" style="width: 110px; height: 110px;">
+          <i class="bi bi-shield-x" style="font-size: 3.5rem;"></i>
+        </span>
+      </div>
+      <h1 class="display-5 fw-bold text-dark">403 Forbidden</h1>
+      <h4 class="fw-semibold text-danger mb-3">Access Denied</h4>
+      <p class="text-muted mb-4 lead fs-6">
+        You do not possess the required permissions to view this resource.
+        This section is restricted to <strong>Administrator</strong> privileges.
+      </p>
+
+      {% if current_user.is_authenticated %}
+        <div class="p-3 bg-white border rounded-3 mb-4 shadow-sm text-start">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-muted small">Current Account:</span>
+            <span class="fw-semibold text-dark">{{ current_user.username }}</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-between">
+            <span class="text-muted small">Assigned Role:</span>
+            <span class="badge bg-secondary text-uppercase">{{ current_user.role }}</span>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="d-flex justify-content-center gap-2">
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+          <i class="bi bi-house-door me-1"></i> Return to Dashboard
+        </a>
+        {% if not current_user.is_authenticated %}
+          <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

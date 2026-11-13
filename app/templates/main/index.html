@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard & System Overview{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Hero Section -->
+  <div class="hero-section mb-4 shadow">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 mb-3 rounded-pill bg-primary bg-opacity-25 border border-primary text-info small">
+          <i class="bi bi-patch-check-fill text-primary"></i>
+          <span>Phase 2 Initialized: Authentication &amp; RBAC (Admin, Manager, Employee)</span>
+        </div>
+        <h1 class="display-5 fw-bold text-white mb-2">Company Management System</h1>
+        <p class="lead text-light opacity-75 mb-4">
+          A high-performance enterprise management platform built with Python 3.14, Flask Blueprints, PostgreSQL, Flask-Login, and modern responsive Bootstrap 5.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{{ url_for('main.db_test') }}" class="btn btn-primary btn-lg shadow-sm d-flex align-items-center gap-2">
+            <i class="bi bi-database-check"></i>
+            <span>Test PostgreSQL Connection</span>
+          </a>
+          <a href="{{ url_for('main.about') }}" class="btn btn-outline-light btn-lg d-flex align-items-center gap-2">
+            <i class="bi bi-diagram-3"></i>
+            <span>Architecture &amp; Docs</span>
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-4 d-none d-lg-block text-center">
+        <div class="p-4 rounded-4 bg-white bg-opacity-10 backdrop-blur border border-white border-opacity-10 text-start shadow-sm">
+          <div class="d-flex align-items-center justify-content-between mb-3 border-bottom border-light border-opacity-10 pb-2">
+            <span class="text-white-50 small text-uppercase fw-bold">Live System State</span>
+            <span class="badge bg-success"><i class="bi bi-activity"></i> Active</span>
+          </div>
+          <div class="small text-light mb-2 d-flex justify-content-between">
+            <span class="opacity-75">Python:</span>
+            <span class="fw-semibold">3.14.10</span>
+          </div>
+          <div class="small text-light mb-2 d-flex justify-content-between">
+            <span class="opacity-75">Flask:</span>
+            <span class="fw-semibold">3.1.3 (Blueprints)</span>
+          </div>
+          <div class="small text-light mb-2 d-flex justify-content-between">
+            <span class="opacity-75">Database:</span>
+            <span class="fw-semibold text-warning">PostgreSQL (psycopg 3)</span>
+          </div>
+          <div class="small text-light d-flex justify-content-between">
+            <span class="opacity-75">Deployment:</span>
+            <span class="fw-semibold text-info">Render WSGI Ready</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Database Connection Banner Status -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-3 p-md-4">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="icon-box {{ 'bg-success-subtle text-success' if db_configured else 'bg-warning-subtle text-warning' }}">
+            <i class="bi {{ 'bi-database-fill-check' if db_configured else 'bi-database-exclamation' }}"></i>
+          </div>
+          <div>
+            <h5 class="mb-0 fw-bold">PostgreSQL Database Configuration</h5>
+            <p class="text-muted small mb-0">
+              {% if db_configured %}
+                PostgreSQL URI is specified in your environment. Click below to run a diagnostic connection test.
+              {% else %}
+                Database credentials not yet configured in <code>.env</code>. The application is running in safe standby mode.
+              {% endif %}
+            </p>
+          </div>
+        </div>
+        <div>
+          <a href="{{ url_for('main.db_test') }}" class="btn {{ 'btn-outline-primary' if db_configured else 'btn-warning' }} text-nowrap">
+            <i class="bi bi-gear-wide-connected me-1"></i> Open DB Diagnostics
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enterprise Architecture Pillars -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 feature-card p-3">
+        <div class="icon-box bg-primary-subtle text-primary mb-3">
+          <i class="bi bi-diagram-3-fill"></i>
+        </div>
+        <h5 class="fw-bold">Flask Blueprints</h5>
+        <p class="text-muted small mb-0">
+          Modular, scalable architecture separating Main, Auth, API, and upcoming Department/Employee business domains cleanly.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 feature-card p-3">
+        <div class="icon-box bg-warning-subtle text-warning mb-3">
+          <i class="bi bi-database-fill-gear"></i>
+        </div>
+        <h5 class="fw-bold">PostgreSQL &amp; ORM</h5>
+        <p class="text-muted small mb-0">
+          Strictly PostgreSQL using Flask-SQLAlchemy 3 &amp; psycopg. No SQLite/MySQL compromises. Prepared with User, Department, and Employee schemas.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 feature-card p-3">
+        <div class="icon-box bg-success-subtle text-success mb-3">
+          <i class="bi bi-shield-lock-fill"></i>
+        </div>
+        <h5 class="fw-bold">Security &amp; Auth</h5>
+        <p class="text-muted small mb-0">
+          Flask-Login integration, secure Werkzeug password hashing, environment secret isolation, and role-based permissions.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 feature-card p-3">
+        <div class="icon-box bg-info-subtle text-info mb-3">
+          <i class="bi bi-cloud-arrow-up-fill"></i>
+        </div>
+        <h5 class="fw-bold">Render Deployment</h5>
+        <p class="text-muted small mb-0">
+          Production-grade WSGI setup via Gunicorn and Procfile. Environment variables manage credentials safely on cloud hosts.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Planned Modules Roadmap -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white border-bottom py-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-kanban me-2 text-primary"></i>System Implementation Roadmap</h5>
+        <span class="badge bg-primary-subtle text-primary">Phased Delivery</span>
+      </div>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="p-3 border rounded-3 bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold text-dark">Module 1: Core Foundation</span>
+              <span class="badge bg-success">Completed</span>
+            </div>
+            <p class="text-muted small mb-0">
+              Folder structure, Flask Blueprints, PostgreSQL connection diagnostics, base layout, and initial models.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="p-3 border rounded-3 bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold text-dark">Module 2: Auth &amp; Users</span>
+              <span class="badge bg-success">Completed</span>
+            </div>
+            <p class="text-muted small mb-0">
+              Flask-Login sessions, secure password hashing, role-based access control (Admin, Manager, Employee), and Admin user provisioning.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <div class="p-3 border rounded-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold text-dark">Module 3: Personnel &amp; Depts</span>
+              <span class="badge bg-secondary">Upcoming</span>
+            </div>
+            <p class="text-muted small mb-0">
+              Department hierarchy, employee profiles, document records, salary tracking, and organization chart.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

@@ -1,0 +1,623 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Executive Admin Dashboard{% endblock %}
+{% block page_title %}Executive Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <!-- Welcome Banner -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">Company Executive Dashboard</h3>
+      <p class="text-muted small mb-0">
+        Real-time workforce metrics, departmental distribution, and operational KPIs powered by PostgreSQL.
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-white text-secondary border px-3 py-2 shadow-sm">
+        <i class="bi bi-calendar3 me-1 text-primary"></i> {{ today.strftime('%A, %B %d, %Y') }}
+      </span>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm shadow-sm" title="Refresh Live Data">
+        <i class="bi bi-arrow-clockwise"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- 7 CORE DASHBOARD STATISTICS CARDS                                     -->
+  <!-- ===================================================================== -->
+  <div class="row g-3 mb-4">
+    
+    <!-- 1. Total Employees -->
+    <div class="col-sm-6 col-xl-3">
+      <a href="{{ url_for('employee.index') }}" class="text-decoration-none">
+        <div class="card stat-card p-3 h-100 border-start border-4 border-primary">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <span class="text-muted small fw-bold text-uppercase">Total Employees</span>
+              <h2 class="fw-bold text-dark my-1">{{ stats.total_employees }}</h2>
+              <span class="text-primary small fw-semibold">
+                <i class="bi bi-arrow-right-short"></i> View Directory
+              </span>
+            </div>
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+              <i class="bi bi-people-fill"></i>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 2. Total Departments -->
+    <div class="col-sm-6 col-xl-3">
+      <a href="{{ url_for('department.index') }}" class="text-decoration-none">
+        <div class="card stat-card p-3 h-100 border-start border-4 border-info">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <span class="text-muted small fw-bold text-uppercase">Departments</span>
+              <h2 class="fw-bold text-dark my-1">{{ stats.total_departments }}</h2>
+              <span class="text-info small fw-semibold">
+                <i class="bi bi-arrow-right-short"></i> Manage Units
+              </span>
+            </div>
+            <div class="stat-icon bg-info bg-opacity-10 text-info">
+              <i class="bi bi-building"></i>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 3. Today's Present Employees -->
+    <div class="col-sm-6 col-xl-3">
+      <a href="{{ url_for('attendance.daily_report') }}" class="text-decoration-none">
+        <div class="card stat-card p-3 h-100 border-start border-4 border-success">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <span class="text-muted small fw-bold text-uppercase">Today's Present</span>
+              <h2 class="fw-bold text-success my-1">{{ stats.today_present }}</h2>
+              <span class="text-muted small">
+                Logged in today
+              </span>
+            </div>
+            <div class="stat-icon bg-success bg-opacity-10 text-success">
+              <i class="bi bi-person-check-fill"></i>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 4. Today's Absent Employees -->
+    <div class="col-sm-6 col-xl-3">
+      <a href="{{ url_for('attendance.daily_report') }}" class="text-decoration-none">
+        <div class="card stat-card p-3 h-100 border-start border-4 border-danger">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <span class="text-muted small fw-bold text-uppercase">Today's Absent</span>
+              <h2 class="fw-bold text-danger my-1">{{ stats.today_absent }}</h2>
+              <span class="text-danger small fw-semibold">
+                <i class="bi bi-calendar-x me-1"></i> Absent status
+              </span>
+            </div>
+            <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+              <i class="bi bi-person-x-fill"></i>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 5. Monthly Salary Expenses -->
+    <div class="col-sm-6 col-xl-4">
+      <a href="{{ url_for('payroll.index') }}" class="text-decoration-none">
+        <div class="card stat-card p-3 h-100 border-start border-4 border-warning">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <span class="text-muted small fw-bold text-uppercase">Monthly Salary Expenses</span>
+              <h2 class="fw-bold text-dark my-1">{{ stats.monthly_salary_expenses|currency_pkr }}</h2>
+              <span class="text-warning-emphasis small fw-semibold">
+                <i class="bi bi-cash-stack me-1"></i> Current Month Payroll
+              </span>
+            </div>
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+              <i class="bi bi-cash-coin"></i>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 6. Pending Tasks -->
+    <div class="col-sm-6 col-xl-4">
+      <a href="{{ url_for('task.index') }}" class="text-decoration-none">
+        <div class="card stat-card p-3 h-100 border-start border-4 border-warning">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <span class="text-muted small fw-bold text-uppercase">Pending Tasks</span>
+              <h2 class="fw-bold text-warning-emphasis my-1">{{ stats.pending_tasks }}</h2>
+              <span class="text-muted small">
+                In progress or queued
+              </span>
+            </div>
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+              <i class="bi bi-clock-history"></i>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 7. Completed Tasks -->
+    <div class="col-sm-6 col-xl-4">
+      <a href="{{ url_for('task.index') }}" class="text-decoration-none">
+        <div class="card stat-card p-3 h-100 border-start border-4 border-success">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <span class="text-muted small fw-bold text-uppercase">Completed Tasks</span>
+              <h2 class="fw-bold text-success my-1">{{ stats.completed_tasks }}</h2>
+              <span class="text-success small fw-semibold">
+                <i class="bi bi-check2-circle me-1"></i> Fully resolved
+              </span>
+            </div>
+            <div class="stat-icon bg-success bg-opacity-10 text-success">
+              <i class="bi bi-check-circle-fill"></i>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- RESPONSIVE CHARTS SECTION                                             -->
+  <!-- ===================================================================== -->
+  <div class="row g-4 mb-4">
+    
+    <!-- Chart 1: Department-Wise Employee Distribution -->
+    <div class="col-lg-4">
+      <div class="card chart-card h-100 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0">
+            <i class="bi bi-pie-chart-fill text-primary me-2"></i>Staff by Department
+          </h6>
+          <a href="{{ url_for('department.index') }}" class="btn btn-sm btn-link text-decoration-none p-0 small">Departments</a>
+        </div>
+
+        {% if charts.dept_labels and charts.dept_labels|length > 0 %}
+          <div style="position: relative; height: 260px;">
+            <canvas id="deptChart"></canvas>
+          </div>
+        {% else %}
+          <div class="d-flex flex-column align-items-center justify-content-center text-center p-4 my-auto bg-light rounded-3" style="min-height: 220px;">
+            <i class="bi bi-pie-chart text-secondary opacity-50 mb-2" style="font-size: 2.5rem;"></i>
+            <h6 class="fw-bold text-secondary mb-1">No Department Data</h6>
+            <p class="text-muted small mb-3">Create departments and assign employees to visualize distribution.</p>
+            <a href="{{ url_for('department.create') }}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i> Add Department
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Chart 2: 7-Day Attendance Trend -->
+    <div class="col-lg-4">
+      <div class="card chart-card h-100 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0">
+            <i class="bi bi-bar-chart-fill text-success me-2"></i>Attendance (Last 7 Days)
+          </h6>
+          <a href="{{ url_for('attendance.index') }}" class="btn btn-sm btn-link text-decoration-none p-0 small">Hub</a>
+        </div>
+
+        {% set total_attendance_recorded = charts.present_trend|sum + charts.absent_trend|sum %}
+        {% if total_attendance_recorded > 0 %}
+          <div style="position: relative; height: 260px;">
+            <canvas id="attendanceChart"></canvas>
+          </div>
+        {% else %}
+          <div class="d-flex flex-column align-items-center justify-content-center text-center p-4 my-auto bg-light rounded-3" style="min-height: 220px;">
+            <i class="bi bi-calendar-check text-secondary opacity-50 mb-2" style="font-size: 2.5rem;"></i>
+            <h6 class="fw-bold text-secondary mb-1">No Attendance Activity</h6>
+            <p class="text-muted small mb-3">No attendance logs found for the past 7 days.</p>
+            <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-success btn-sm">
+              <i class="bi bi-calendar-plus me-1"></i> Attendance Hub
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Chart 3: Monthly Salary Expense Trend -->
+    <div class="col-lg-4">
+      <div class="card chart-card h-100 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0">
+            <i class="bi bi-graph-up text-warning me-2"></i>Monthly Salary Expenses
+          </h6>
+          <a href="{{ url_for('payroll.index') }}" class="btn btn-sm btn-link text-decoration-none p-0 small">Payroll</a>
+        </div>
+
+        {% set total_salary_chart = charts.salary_data|sum %}
+        {% if total_salary_chart > 0 %}
+          <div style="position: relative; height: 260px;">
+            <canvas id="salaryChart"></canvas>
+          </div>
+        {% else %}
+          <div class="d-flex flex-column align-items-center justify-content-center text-center p-4 my-auto bg-light rounded-3" style="min-height: 220px;">
+            <i class="bi bi-cash-stack text-secondary opacity-50 mb-2" style="font-size: 2.5rem;"></i>
+            <h6 class="fw-bold text-secondary mb-1">No Salary Records</h6>
+            <p class="text-muted small mb-3">Set employee compensation or run payroll to see trends.</p>
+            <a href="{{ url_for('payroll.index') }}" class="btn btn-outline-warning btn-sm">
+              <i class="bi bi-cash me-1"></i> Record Payroll
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- RECENT ACTIVITY TABLES SECTION                                        -->
+  <!-- ===================================================================== -->
+  <div class="row g-4 mb-4">
+
+    <!-- Recent Employee Registrations -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold text-dark mb-0">
+            <i class="bi bi-person-lines-fill text-primary me-2"></i>Recent Employees
+          </h6>
+          <a href="{{ url_for('employee.index') }}" class="btn btn-outline-primary btn-sm">All</a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_employees %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <tbody class="small">
+                  {% for emp in recent_employees %}
+                    <tr>
+                      <td class="ps-3" style="width: 40px;">
+                        <div class="rounded-circle bg-light border fw-bold text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.75rem;">
+                          {{ emp.first_name[0] }}{{ emp.last_name[0] }}
+                        </div>
+                      </td>
+                      <td>
+                        <div class="fw-bold text-dark">{{ emp.full_name }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">{{ emp.job_title }}</div>
+                      </td>
+                      <td class="text-end pe-3">
+                        <span class="badge {{ 'bg-success-subtle text-success border border-success' if emp.status == 'active' else 'bg-secondary-subtle text-secondary' }}">
+                          {{ emp.status|capitalize }}
+                        </span>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="p-4 text-center text-muted">
+              <p class="small mb-2">No employee records registered yet.</p>
+              <a href="{{ url_for('admin.employees') }}" class="btn btn-sm btn-primary">Add First Employee</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Attendance Activity -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold text-dark mb-0">
+            <i class="bi bi-clock-history text-success me-2"></i>Recent Attendance
+          </h6>
+          <a href="{{ url_for('attendance.history') }}" class="btn btn-outline-success btn-sm">All</a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_attendance %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <tbody class="small">
+                  {% for att in recent_attendance %}
+                    <tr>
+                      <td class="ps-3">
+                        <div class="fw-bold text-dark">{{ att.employee.full_name }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">{{ att.date.strftime('%b %d, %Y') }}</div>
+                      </td>
+                      <td class="text-end pe-3">
+                        {% if att.status == 'present' %}
+                          <span class="badge bg-success-subtle text-success border border-success">Present</span>
+                        {% elif att.status == 'absent' %}
+                          <span class="badge bg-danger-subtle text-danger border border-danger">Absent</span>
+                        {% elif att.status == 'late' %}
+                          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning">Late</span>
+                        {% else %}
+                          <span class="badge bg-info-subtle text-info border border-info">{{ att.status|capitalize }}</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="p-4 text-center text-muted">
+              <p class="small mb-2">No recent attendance logged.</p>
+              <a href="{{ url_for('attendance.index') }}" class="btn btn-sm btn-success">Open Attendance Hub</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Tasks -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold text-dark mb-0">
+            <i class="bi bi-list-task text-warning me-2"></i>Recent Tasks
+          </h6>
+          <a href="{{ url_for('task.index') }}" class="btn btn-outline-warning btn-sm">All</a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_tasks %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <tbody class="small">
+                  {% for t in recent_tasks %}
+                    <tr>
+                      <td class="ps-3">
+                        <div class="fw-bold text-dark text-truncate" style="max-width: 170px;" title="{{ t.title }}">{{ t.title }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">
+                          {{ t.assignee.full_name if t.assignee else 'Unassigned' }}
+                        </div>
+                      </td>
+                      <td class="text-end pe-3">
+                        {% if t.status == 'completed' %}
+                          <span class="badge bg-success-subtle text-success border border-success">Done</span>
+                        {% else %}
+                          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning">Pending</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="p-4 text-center text-muted">
+              <p class="small mb-2">No tasks created yet.</p>
+              <a href="{{ url_for('task.create') }}" class="btn btn-sm btn-warning">Create First Task</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- QUICK NAVIGATION TO ALL MODULES                                       -->
+  <!-- ===================================================================== -->
+  <div class="card border-0 shadow-sm rounded-3 p-4">
+    <h6 class="fw-bold text-dark mb-3">
+      <i class="bi bi-grid-fill text-primary me-2"></i>Quick Navigation to System Modules
+    </h6>
+    <div class="row g-3">
+      <div class="col-6 col-md-4 col-lg">
+        <a href="{{ url_for('employee.index') }}" class="btn btn-light w-100 p-3 border text-start d-flex flex-column gap-1">
+          <i class="bi bi-person-badge text-primary fs-4"></i>
+          <span class="fw-bold small text-dark">Employees</span>
+          <span class="text-muted" style="font-size: 0.7rem;">Staff Profiles</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-4 col-lg">
+        <a href="{{ url_for('department.index') }}" class="btn btn-light w-100 p-3 border text-start d-flex flex-column gap-1">
+          <i class="bi bi-building text-info fs-4"></i>
+          <span class="fw-bold small text-dark">Departments</span>
+          <span class="text-muted" style="font-size: 0.7rem;">Org Structure</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-4 col-lg">
+        <a href="{{ url_for('attendance.index') }}" class="btn btn-light w-100 p-3 border text-start d-flex flex-column gap-1">
+          <i class="bi bi-calendar-check text-success fs-4"></i>
+          <span class="fw-bold small text-dark">Attendance</span>
+          <span class="text-muted" style="font-size: 0.7rem;">Check-in Logs</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-4 col-lg">
+        <a href="{{ url_for('task.index') }}" class="btn btn-light w-100 p-3 border text-start d-flex flex-column gap-1">
+          <i class="bi bi-check2-square text-warning fs-4"></i>
+          <span class="fw-bold small text-dark">Tasks</span>
+          <span class="text-muted" style="font-size: 0.7rem;">Task Tracking</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-4 col-lg">
+        <a href="{{ url_for('payroll.index') }}" class="btn btn-light w-100 p-3 border text-start d-flex flex-column gap-1">
+          <i class="bi bi-cash-stack text-success fs-4"></i>
+          <span class="fw-bold small text-dark">Payroll</span>
+          <span class="text-muted" style="font-size: 0.7rem;">Salary Ledger</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-4 col-lg">
+        <a href="{{ url_for('report.index') }}" class="btn btn-light w-100 p-3 border text-start d-flex flex-column gap-1">
+          <i class="bi bi-file-earmark-bar-graph text-secondary fs-4"></i>
+          <span class="fw-bold small text-dark">Reports</span>
+          <span class="text-muted" style="font-size: 0.7rem;">Analytics &amp; CSV</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-4 col-lg">
+        <a href="{{ url_for('auth.list_users') }}" class="btn btn-light w-100 p-3 border text-start d-flex flex-column gap-1">
+          <i class="bi bi-shield-lock text-danger fs-4"></i>
+          <span class="fw-bold small text-dark">User RBAC</span>
+          <span class="text-muted" style="font-size: 0.7rem;">Roles &amp; Logins</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  
+  // -------------------------------------------------------------------------
+  // 1. Department Distribution Doughnut Chart
+  // -------------------------------------------------------------------------
+  const deptCanvas = document.getElementById('deptChart');
+  if (deptCanvas) {
+    const deptLabels = {{ charts.dept_labels|tojson }};
+    const deptData = {{ charts.dept_counts|tojson }};
+
+    if (deptLabels.length > 0) {
+      new Chart(deptCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: deptLabels,
+          datasets: [{
+            data: deptData,
+            backgroundColor: [
+              '#0d6efd', '#0dcaf0', '#198754', '#ffc107', '#6f42c1', '#fd7e14', '#20c997'
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff',
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // 2. 7-Day Attendance Trend Bar Chart
+  // -------------------------------------------------------------------------
+  const attCanvas = document.getElementById('attendanceChart');
+  if (attCanvas) {
+    const attLabels = {{ charts.attendance_labels|tojson }};
+    const presentData = {{ charts.present_trend|tojson }};
+    const absentData = {{ charts.absent_trend|tojson }};
+
+    new Chart(attCanvas, {
+      type: 'bar',
+      data: {
+        labels: attLabels,
+        datasets: [
+          {
+            label: 'Present',
+            data: presentData,
+            backgroundColor: '#198754',
+            borderRadius: 4,
+          },
+          {
+            label: 'Absent',
+            data: absentData,
+            backgroundColor: '#dc3545',
+            borderRadius: 4,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0, font: { family: 'Inter', size: 10 } },
+            grid: { color: '#f1f5f9' }
+          },
+          x: {
+            ticks: { font: { family: 'Inter', size: 10 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // 3. Monthly Salary Expense Area Chart
+  // -------------------------------------------------------------------------
+  const salCanvas = document.getElementById('salaryChart');
+  if (salCanvas) {
+    const salLabels = {{ charts.salary_labels|tojson }};
+    const salData = {{ charts.salary_data|tojson }};
+
+    new Chart(salCanvas, {
+      type: 'line',
+      data: {
+        labels: salLabels,
+        datasets: [{
+          label: 'Salary Expense ($)',
+          data: salData,
+          borderColor: '#ffc107',
+          backgroundColor: 'rgba(255, 193, 7, 0.15)',
+          fill: true,
+          tension: 0.35,
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointBackgroundColor: '#ffc107'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return '$' + context.parsed.y.toLocaleString();
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              font: { family: 'Inter', size: 10 },
+              callback: function(val) { return '$' + val.toLocaleString(); }
+            },
+            grid: { color: '#f1f5f9' }
+          },
+          x: {
+            ticks: { font: { family: 'Inter', size: 10 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+});
+</script>
+{% endblock %}
+

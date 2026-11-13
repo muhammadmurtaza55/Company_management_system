@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Manager Operations Dashboard | {{ dept.name if dept else 'Department' }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Manager Welcome Banner -->
+  <div class="card border-0 shadow-sm rounded-3 bg-dark text-white p-4 mb-4" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge bg-warning text-dark fw-bold text-uppercase px-2 py-1">Department Manager</span>
+          {% if dept %}
+            <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1 font-monospace">{{ dept.code }}</span>
+          {% endif %}
+        </div>
+        <h2 class="h3 fw-bold mb-1">
+          Welcome, {{ current_user.username }}!
+        </h2>
+        <p class="text-light opacity-75 mb-0">
+          Managing <strong>{{ dept.name if dept else 'Unassigned Unit' }}</strong>. Oversee attendance, assign tasks, and review leave applications.
+        </p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <a href="{{ url_for('task.create') }}" class="btn btn-warning btn-sm d-flex align-items-center gap-1 shadow-sm text-dark fw-semibold">
+          <i class="bi bi-plus-circle"></i>
+          <span>Assign Task</span>
+        </a>
+        <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-light btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-calendar-check"></i>
+          <span>Attendance</span>
+        </a>
+        <a href="{{ url_for('employee.index') }}" class="btn btn-outline-light btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-people"></i>
+          <span>Staff Roster</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Department KPI Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-primary h-100">
+        <span class="text-muted small fw-bold text-uppercase">Department Staff</span>
+        <h3 class="fw-bold text-dark my-1">{{ dept_staff|length }}</h3>
+        <span class="text-muted small">Active personnel</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-success h-100">
+        <span class="text-muted small fw-bold text-uppercase">Present Today</span>
+        <h3 class="fw-bold text-success my-1">{{ present_today }}</h3>
+        <span class="text-success small fw-semibold">
+          {% if late_today > 0 %}{{ late_today }} late arrival(s){% else %}On duty{% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-warning h-100">
+        <span class="text-muted small fw-bold text-uppercase">Active Tasks</span>
+        <h3 class="fw-bold text-warning-emphasis my-1">{{ in_progress_tasks + pending_tasks }}</h3>
+        <span class="text-muted small">
+          {% if overdue_tasks > 0 %}<strong class="text-danger">{{ overdue_tasks }} overdue</strong>{% else %}In workflow{% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-info h-100">
+        <span class="text-muted small fw-bold text-uppercase">Monthly Payroll (PKR)</span>
+        <h3 class="fw-bold text-info my-1">{{ total_dept_payroll|currency_pkr }}</h3>
+        <span class="text-muted small">Department budget</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Split Grid -->
+  <div class="row g-4 mb-4">
+
+    <!-- Left: Pending Leave Approvals -->
+    <div class="col-12 col-lg-6">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-calendar2-range text-danger"></i>
+            <span>Pending Leave Requests</span>
+            <span class="badge bg-danger-subtle text-danger border">{{ pending_leaves|length }}</span>
+          </h6>
+          <a href="{{ url_for('attendance.leaves', status='pending') }}" class="btn btn-outline-secondary btn-sm">
+            View All
+          </a>
+        </div>
+
+        <div class="card-body p-0">
+          {% if pending_leaves %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <tbody class="small">
+                  {% for lv in pending_leaves %}
+                    <tr>
+                      <td class="ps-3 py-3">
+                        <div class="fw-bold text-dark">{{ lv.employee.full_name }}</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">{{ lv.leave_type|title }} &bull; {{ lv.duration_days }} day(s)</div>
+                        <div class="text-muted fst-italic text-truncate" style="max-width: 200px; font-size: 0.75rem;">"{{ lv.reason }}"</div>
+                      </td>
+                      <td class="text-end pe-3">
+                        <div class="d-flex align-items-center justify-content-end gap-1">
+                          <form method="POST" action="{{ url_for('attendance.approve_leave', id=lv.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-success btn-sm py-0 px-2" style="font-size: 0.75rem;">
+                              Approve
+                            </button>
+                          </form>
+                          <form method="POST" action="{{ url_for('attendance.reject_leave', id=lv.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size: 0.75rem;">
+                              Reject
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="p-4 text-center text-muted">
+              <i class="bi bi-check2-circle fs-2 text-success d-block mb-1"></i>
+              <p class="small mb-0">All department leave requests have been reviewed.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Department Active Tasks -->
+    <div class="col-12 col-lg-6">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-check2-square text-primary"></i>
+            <span>Department Workflow Tasks</span>
+          </h6>
+          <a href="{{ url_for('task.index') }}" class="btn btn-outline-secondary btn-sm">
+            Task Board
+          </a>
+        </div>
+
+        <div class="card-body p-0">
+          {% if recent_tasks %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <tbody class="small">
+                  {% for t in recent_tasks %}
+                    <tr>
+                      <td class="ps-3 py-3">
+                        <div class="fw-bold text-dark">
+                          <a href="{{ url_for('task.detail', id=t.id) }}" class="text-dark text-decoration-none">
+                            {{ t.title }}
+                          </a>
+                        </div>
+                        <div class="text-muted" style="font-size: 0.72rem;">
+                          Assignee: {{ t.assignee.full_name if t.assignee else 'Unassigned' }}
+                          {% if t.due_date %} &bull; Due: {{ t.due_date.strftime('%b %d') }}{% endif %}
+                        </div>
+                      </td>
+                      <td class="text-end pe-3">
+                        <span class="badge {{ t.status_badge_class }} text-capitalize" style="font-size: 0.7rem;">
+                          {{ t.status|replace('_', ' ') }}
+                        </span>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="p-4 text-center text-muted">
+              <p class="small mb-2">No active tasks assigned in this department.</p>
+              <a href="{{ url_for('task.create') }}" class="btn btn-primary btn-sm">Assign First Task</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Department Personnel Roster -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+      <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+        <i class="bi bi-people-fill text-primary"></i>
+        <span>Department Staff Roster</span>
+      </h6>
+      <a href="{{ url_for('attendance.daily_report') }}" class="btn btn-outline-primary btn-sm">
+        Daily Attendance Roster
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light text-muted small text-uppercase">
+          <tr>
+            <th>Employee</th>
+            <th>Designation</th>
+            <th>Email</th>
+            <th>Base Salary (PKR)</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in dept_staff %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="avatar-sm rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.75rem;">
+                    {{ e.first_name[0] }}{{ e.last_name[0] }}
+                  </div>
+                  <div>
+                    <a href="{{ url_for('employee.detail', id=e.id) }}" class="fw-bold text-dark text-decoration-none">
+                      {{ e.full_name }}
+                    </a>
+                    <div class="small text-muted font-monospace" style="font-size: 0.7rem;">{{ e.employee_id }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>{{ e.job_title }}</td>
+              <td class="small text-muted">{{ e.email }}</td>
+              <td class="font-monospace fw-semibold">{{ (e.salary or 0)|currency_pkr }}</td>
+              <td class="text-end pe-3">
+                <a href="{{ url_for('employee.detail', id=e.id) }}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 0.75rem;">
+                  View Profile
+                </a>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">No staff assigned to this department yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

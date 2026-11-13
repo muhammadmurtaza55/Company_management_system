@@ -1,0 +1,143 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Departments | Nexus CMS{% endblock %}
+{% block page_title %}Department Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">Corporate Departments</h3>
+      <p class="text-muted small mb-0">Organize business operational units, codes, and workforce allocation.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('department.index') }}" class="btn btn-outline-primary d-flex align-items-center gap-2">
+        <i class="bi bi-diagram-3-fill"></i>
+        <span>Advanced Department Hub</span>
+      </a>
+      <button class="btn btn-primary d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#addDeptModal">
+        <i class="bi bi-building-add"></i>
+        <span>Add Department</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Departments Table Card -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+      <span class="fw-semibold text-dark"><i class="bi bi-building text-info me-2"></i>Departmental Hierarchy</span>
+      <span class="badge bg-secondary">{{ departments|length }} Total</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" style="width: 70px;">ID</th>
+            <th scope="col">Code</th>
+            <th scope="col">Department Name</th>
+            <th scope="col">Manager</th>
+            <th scope="col">Staff Assigned</th>
+            <th scope="col" class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dept in departments %}
+            <tr>
+              <td class="font-monospace text-muted small">#{{ dept.id }}</td>
+              <td>
+                <span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1 font-monospace">
+                  {{ dept.code }}
+                </span>
+              </td>
+              <td>
+                <div class="fw-bold text-dark">{{ dept.name }}</div>
+                {% if dept.description %}
+                  <div class="text-secondary small text-truncate" style="max-width: 260px;">{{ dept.description }}</div>
+                {% endif %}
+              </td>
+              <td>
+                {% if dept.manager %}
+                  <span class="badge bg-light text-dark border">
+                    <i class="bi bi-person-check-fill text-primary me-1"></i>{{ dept.manager.full_name }}
+                  </span>
+                {% else %}
+                  <span class="badge bg-light text-muted border">Unassigned</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-info-subtle text-info border border-info">
+                  <i class="bi bi-people me-1"></i> {{ dept.employees|length }} members
+                </span>
+              </td>
+              <td class="text-end pe-4">
+                <div class="btn-group btn-group-sm">
+                  <a href="{{ url_for('department.detail', id=dept.id) }}" class="btn btn-outline-primary" title="View Department">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{{ url_for('department.edit', id=dept.id) }}" class="btn btn-outline-secondary" title="Edit Department">
+                    <i class="bi bi-pencil-square"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-5 text-muted">
+                <i class="bi bi-building text-secondary opacity-50 mb-2" style="font-size: 2.5rem; display: block;"></i>
+                <h6 class="fw-bold text-secondary mb-1">No Departments Found</h6>
+                <p class="small mb-3">Create organizational departments to categorize your workforce.</p>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDeptModal">
+                  <i class="bi bi-building-add me-1"></i> Add Department
+                </button>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDeptModal" tabindex="-1" aria-labelledby="addDeptModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold" id="addDeptModalLabel">
+          <i class="bi bi-building-add me-2 text-info"></i>Add New Department
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="POST" action="{{ url_for('admin.departments') }}">
+        {{ form.hidden_tag() }}
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-dark">{{ form.name.label.text }} *</label>
+            {{ form.name(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-dark">{{ form.code.label.text }} *</label>
+            {{ form.code(class="form-control") }}
+            <small class="text-muted">Short identifier (e.g. ENG, FIN, HR, MKT)</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-dark">{{ form.description.label.text }}</label>
+            {{ form.description(class="form-control") }}
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Department</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

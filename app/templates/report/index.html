@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Executive Reports Center{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Reports</li>
+        </ol>
+      </nav>
+      <h2 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-file-earmark-bar-graph text-primary"></i>
+        <span>Executive Reports Center</span>
+      </h2>
+      <p class="text-muted mb-0">
+        Access audit-grade operational reports, department analytics, workforce metrics, and data exports.
+      </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-light text-dark border px-3 py-2">
+        <i class="bi bi-calendar2-range me-1 text-primary"></i>
+        <span>Live PostgreSQL Analytics</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- High-Level Overview Metrics -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white text-center border-start border-4 border-primary h-100">
+        <span class="text-muted small fw-bold text-uppercase">Total Workforce</span>
+        <h3 class="fw-bold text-dark my-1">{{ stats.total_employees }}</h3>
+        <span class="text-muted small">{{ stats.active_employees }} Active Personnel</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white text-center border-start border-4 border-info h-100">
+        <span class="text-muted small fw-bold text-uppercase">Departments</span>
+        <h3 class="fw-bold text-info my-1">{{ stats.total_departments }}</h3>
+        <span class="text-muted small">Organizational Units</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white text-center border-start border-4 border-warning h-100">
+        <span class="text-muted small fw-bold text-uppercase">Total Tasks</span>
+        <h3 class="fw-bold text-warning-emphasis my-1">{{ stats.total_tasks }}</h3>
+        <span class="text-muted small">Assigned Corporate Tasks</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white text-center border-start border-4 border-success h-100">
+        <span class="text-muted small fw-bold text-uppercase">Completed Tasks</span>
+        <h3 class="fw-bold text-success my-1">{{ stats.completed_tasks }}</h3>
+        <span class="text-success small">Delivered Output</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 Report Suites Grid -->
+  <div class="row g-4">
+
+    <!-- Report 1: Employee Workforce Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-white border-top border-4 border-primary">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 bg-primary bg-opacity-10 text-primary p-3 fs-3">
+            <i class="bi bi-people-fill"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold text-dark mb-0">Workforce Demographics</h5>
+            <span class="small text-muted">Headcount &amp; Roles</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-4">
+          Detailed personnel roster with job titles, departments, joining dates, base salaries, and employment statuses.
+        </p>
+        <div class="mt-auto d-flex justify-content-between align-items-center pt-2 border-top">
+          <a href="{{ url_for('report.export_employees_csv') }}" class="btn btn-outline-secondary btn-sm" title="Download CSV">
+            <i class="bi bi-download me-1"></i>CSV
+          </a>
+          <a href="{{ url_for('report.employee_report') }}" class="btn btn-primary btn-sm">
+            <span>View Report</span> &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report 2: Department Performance Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-white border-top border-4 border-info">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 bg-info bg-opacity-10 text-info p-3 fs-3">
+            <i class="bi bi-building"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold text-dark mb-0">Department Analytics</h5>
+            <span class="small text-muted">Staffing &amp; Budget Allocation</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-4">
+          Organizational hierarchy report tracking managers, staff distribution, and cumulative monthly salary allocation per unit.
+        </p>
+        <div class="mt-auto d-flex justify-content-between align-items-center pt-2 border-top">
+          <a href="{{ url_for('report.export_departments_csv') }}" class="btn btn-outline-secondary btn-sm" title="Download CSV">
+            <i class="bi bi-download me-1"></i>CSV
+          </a>
+          <a href="{{ url_for('report.department_report') }}" class="btn btn-info btn-sm text-white">
+            <span>View Report</span> &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report 3: Attendance Compliance Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-white border-top border-4 border-warning">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 bg-warning bg-opacity-10 text-warning p-3 fs-3">
+            <i class="bi bi-calendar-check"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold text-dark mb-0">Attendance Compliance</h5>
+            <span class="small text-muted">Punctuality &amp; Work Hours</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-4">
+          Time-tracking audit including present vs absent rates, late arrival minutes (threshold 09:30 AM), and total work hours.
+        </p>
+        <div class="mt-auto d-flex justify-content-between align-items-center pt-2 border-top">
+          <a href="{{ url_for('report.export_attendance_csv') }}" class="btn btn-outline-secondary btn-sm" title="Download CSV">
+            <i class="bi bi-download me-1"></i>CSV
+          </a>
+          <a href="{{ url_for('report.attendance_report') }}" class="btn btn-warning btn-sm text-dark">
+            <span>View Report</span> &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report 4: Payroll Disbursement Report (PKR) -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-white border-top border-4 border-success">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 bg-success bg-opacity-10 text-success p-3 fs-3">
+            <i class="bi bi-cash-stack"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold text-dark mb-0">Payroll &amp; Compensation</h5>
+            <span class="small text-muted">Disbursements in PKR</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-4">
+          Financial ledger of base pay, bonuses, deductions, and net compensation in PKR. High-precision Decimal calculations.
+        </p>
+        <div class="mt-auto d-flex justify-content-between align-items-center pt-2 border-top">
+          <a href="{{ url_for('report.export_payroll_csv') }}" class="btn btn-outline-secondary btn-sm" title="Download CSV">
+            <i class="bi bi-download me-1"></i>CSV
+          </a>
+          <a href="{{ url_for('report.payroll_report') }}" class="btn btn-success btn-sm">
+            <span>View Report</span> &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report 5: Leave Analytics Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-white border-top border-4 border-danger">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 bg-danger bg-opacity-10 text-danger p-3 fs-3">
+            <i class="bi bi-calendar2-range"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold text-dark mb-0">Leave Utilization</h5>
+            <span class="small text-muted">Absence &amp; Leave Types</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-4">
+          Comprehensive analysis of annual, sick, and casual leave requests with approval status, reasons, and duration days.
+        </p>
+        <div class="mt-auto d-flex justify-content-between align-items-center pt-2 border-top">
+          <a href="{{ url_for('report.export_leaves_csv') }}" class="btn btn-outline-secondary btn-sm" title="Download CSV">
+            <i class="bi bi-download me-1"></i>CSV
+          </a>
+          <a href="{{ url_for('report.leave_report') }}" class="btn btn-danger btn-sm">
+            <span>View Report</span> &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report 6: Task Execution Performance Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-white border-top border-4 border-dark">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 bg-dark bg-opacity-10 text-dark p-3 fs-3">
+            <i class="bi bi-check2-square"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold text-dark mb-0">Task Performance</h5>
+            <span class="small text-muted">Delivery &amp; Overdue Tracking</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-4">
+          Operational workflow review tracking completed milestones, in-progress workloads, and overdue task escalations.
+        </p>
+        <div class="mt-auto d-flex justify-content-between align-items-center pt-2 border-top">
+          <a href="{{ url_for('report.export_tasks_csv') }}" class="btn btn-outline-secondary btn-sm" title="Download CSV">
+            <i class="bi bi-download me-1"></i>CSV
+          </a>
+          <a href="{{ url_for('report.task_report') }}" class="btn btn-dark btn-sm">
+            <span>View Report</span> &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+

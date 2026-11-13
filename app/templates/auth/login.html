@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In | Nexus CMS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+      
+      <!-- Card Container -->
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        
+        <!-- Header -->
+        <div class="card-header bg-dark text-white text-center py-4 border-0">
+          <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-3 p-3 mb-2 shadow-sm">
+            <i class="bi bi-shield-lock-fill fs-3"></i>
+          </div>
+          <h4 class="fw-bold mb-1">Company Management System</h4>
+          <p class="text-secondary small mb-0">Enter your corporate credentials to sign in</p>
+        </div>
+
+        <!-- Form Body -->
+        <div class="card-body p-4 p-md-5 bg-white">
+          {% if no_users_exist %}
+            <div class="alert alert-warning border border-warning shadow-sm mb-4">
+              <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-exclamation-triangle-fill fs-5 text-warning flex-shrink-0 mt-1"></i>
+                <div>
+                  <h6 class="fw-bold mb-1">No Accounts in Database Yet</h6>
+                  <p class="small mb-2">The PostgreSQL database has zero registered users. Please initialize your Administrator account below.</p>
+                  <a href="{{ url_for('auth.register') }}" class="btn btn-warning btn-sm fw-bold">
+                    <i class="bi bi-shield-plus me-1"></i> Create Administrator Account
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- Username or Email Field -->
+            <div class="mb-3">
+              <label for="{{ form.username_or_email.id }}" class="form-label fw-semibold text-dark small">
+                {{ form.username_or_email.label.text }}
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted">
+                  <i class="bi bi-person"></i>
+                </span>
+                {{ form.username_or_email(class="form-control" + (" is-invalid" if form.username_or_email.errors else "")) }}
+              </div>
+              {% for error in form.username_or_email.errors %}
+                <div class="invalid-feedback d-block small mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+                </div>
+              {% endfor %}
+            </div>
+
+            <!-- Password Field with Show/Hide Toggle -->
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="{{ form.password.id }}" class="form-label fw-semibold text-dark small mb-0">
+                  {{ form.password.label.text }}
+                </label>
+              </div>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted">
+                  <i class="bi bi-key"></i>
+                </span>
+                {{ form.password(class="form-control border-end-0" + (" is-invalid" if form.password.errors else ""), id="loginPassword") }}
+                <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePasswordBtn" title="Toggle password visibility">
+                  <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                </button>
+              </div>
+              {% for error in form.password.errors %}
+                <div class="invalid-feedback d-block small mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+                </div>
+              {% endfor %}
+            </div>
+
+            <!-- Remember Me -->
+            <div class="mb-4 form-check">
+              {{ form.remember_me(class="form-check-input") }}
+              <label class="form-check-label text-muted small user-select-none" for="{{ form.remember_me.id }}">
+                {{ form.remember_me.label.text }}
+              </label>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid mb-3">
+              <button type="submit" class="btn btn-primary btn-lg shadow-sm fw-semibold d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-box-arrow-in-right"></i>
+                <span>Sign In to System</span>
+              </button>
+            </div>
+
+            <!-- Enterprise Notice -->
+            <div class="p-3 bg-light rounded-3 border text-center">
+              <small class="text-muted d-block">
+                <i class="bi bi-shield-check text-success me-1"></i>
+                Protected by Role-Based Access Control (RBAC).
+              </small>
+              <small class="text-secondary d-block mt-1">
+                New accounts are provisioned exclusively by system Administrators.
+              </small>
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+    const pwdInput = document.getElementById('loginPassword');
+    const icon = document.getElementById('togglePasswordIcon');
+
+    if (toggleBtn && pwdInput) {
+      toggleBtn.addEventListener('click', () => {
+        const isPassword = pwdInput.getAttribute('type') === 'password';
+        pwdInput.setAttribute('type', isPassword ? 'text' : 'password');
+        icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+      });
+    }
+  });
+</script>
+{% endblock %}
+

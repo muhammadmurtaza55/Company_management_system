@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Submit Leave Request{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+
+      <!-- Breadcrumbs -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('attendance.index') }}" class="text-decoration-none text-muted">Attendance</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('attendance.leaves') }}" class="text-decoration-none text-muted">Leaves</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Apply</li>
+        </ol>
+      </nav>
+
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <i class="bi bi-calendar-plus-fill text-primary"></i>
+            <span>Submit Leave Request</span>
+          </h5>
+          <p class="text-muted small mb-0">Fill in the details below to request formal time off.</p>
+        </div>
+
+        <div class="card-body p-4">
+          <form method="POST" action="{{ url_for('attendance.submit_leave') }}" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- Leave Type -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">{{ form.leave_type.label }} <span class="text-danger">*</span></label>
+              {{ form.leave_type(class="form-select" + (" is-invalid" if form.leave_type.errors else "")) }}
+              {% for error in form.leave_type.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Start Date & End Date -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.start_date.label }} <span class="text-danger">*</span></label>
+                {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else ""), type="date") }}
+                {% for error in form.start_date.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.end_date.label }} <span class="text-danger">*</span></label>
+                {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else ""), type="date") }}
+                {% for error in form.end_date.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Reason -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold text-dark small">{{ form.reason.label }} <span class="text-danger">*</span></label>
+              {{ form.reason(class="form-control" + (" is-invalid" if form.reason.errors else ""), rows="4", placeholder="Explain the reason for this time off request...") }}
+              {% for error in form.reason.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+              <div class="form-text small text-muted">Please provide sufficient detail for managerial evaluation.</div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between gap-2 pt-2 border-top">
+              <a href="{{ url_for('attendance.leaves') }}" class="btn btn-outline-secondary">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-primary d-flex align-items-center gap-2">
+                <i class="bi bi-send-fill"></i>
+                <span>Submit Request</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

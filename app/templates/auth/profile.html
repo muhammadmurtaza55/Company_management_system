@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}User Profile &amp; Security | Nexus CMS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-3 small">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">My Profile</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    
+    <!-- Left Column: User Account Overview -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-body p-4 text-center">
+          
+          <!-- Avatar Icon -->
+          <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary mb-3" style="width: 80px; height: 80px;">
+            <i class="bi bi-person-badge fs-1"></i>
+          </div>
+
+          <h4 class="fw-bold mb-1">{{ current_user.username }}</h4>
+          <p class="text-muted small mb-3">{{ current_user.email }}</p>
+
+          <!-- Role Badge -->
+          <div class="mb-4">
+            {% if current_user.is_admin %}
+              <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2 fs-6">
+                <i class="bi bi-shield-shaded me-1"></i> System Administrator
+              </span>
+            {% elif current_user.is_manager %}
+              <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-3 py-2 fs-6">
+                <i class="bi bi-briefcase me-1"></i> Department Manager
+              </span>
+            {% else %}
+              <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-2 fs-6">
+                <i class="bi bi-person-check me-1"></i> Company Employee
+              </span>
+            {% endif %}
+          </div>
+
+          <hr class="my-4 text-muted">
+
+          <!-- Account Details List -->
+          <div class="text-start">
+            <div class="d-flex justify-content-between py-2 border-bottom">
+              <span class="text-muted small">Account ID:</span>
+              <span class="fw-semibold small font-monospace">#{{ current_user.id }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-2 border-bottom">
+              <span class="text-muted small">Account Status:</span>
+              <span class="badge {{ 'bg-success' if current_user.is_active else 'bg-secondary' }}">
+                {{ 'Active' if current_user.is_active else 'Deactivated' }}
+              </span>
+            </div>
+            <div class="d-flex justify-content-between py-2 border-bottom">
+              <span class="text-muted small">Registered Since:</span>
+              <span class="fw-semibold small">{{ current_user.created_at.strftime('%b %d, %Y') if current_user.created_at else 'N/A' }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-2">
+              <span class="text-muted small">Last Login:</span>
+              <span class="fw-semibold small">{{ current_user.last_login.strftime('%b %d, %Y %H:%M UTC') if current_user.last_login else 'Current Session' }}</span>
+            </div>
+          </div>
+
+          {% if current_user.is_admin %}
+            <div class="d-grid mt-4">
+              <a href="{{ url_for('auth.list_users') }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-people-fill me-1"></i> Open User Administration
+              </a>
+            </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Security & Password Change -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-key-fill text-primary me-2"></i>Change Password
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <p class="text-muted small mb-4">
+            To ensure corporate security, passwords must be at least 8 characters long and are encrypted using industry-standard hashing algorithms (scrypt/PBKDF2).
+          </p>
+
+          <form method="POST" action="{{ url_for('auth.profile') }}" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- Current Password -->
+            <div class="mb-3">
+              <label for="{{ form.current_password.id }}" class="form-label fw-semibold small text-dark">
+                {{ form.current_password.label.text }}
+              </label>
+              {{ form.current_password(class="form-control" + (" is-invalid" if form.current_password.errors else "")) }}
+              {% for error in form.current_password.errors %}
+                <div class="invalid-feedback small d-block mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- New Password -->
+            <div class="mb-3">
+              <label for="{{ form.new_password.id }}" class="form-label fw-semibold small text-dark">
+                {{ form.new_password.label.text }}
+              </label>
+              {{ form.new_password(class="form-control" + (" is-invalid" if form.new_password.errors else "")) }}
+              {% for error in form.new_password.errors %}
+                <div class="invalid-feedback small d-block mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Confirm New Password -->
+            <div class="mb-4">
+              <label for="{{ form.confirm_password.id }}" class="form-label fw-semibold small text-dark">
+                {{ form.confirm_password.label.text }}
+              </label>
+              {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else "")) }}
+              {% for error in form.confirm_password.errors %}
+                <div class="invalid-feedback small d-block mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-primary d-flex align-items-center gap-2">
+                <i class="bi bi-check2-circle"></i>
+                <span>Update Password</span>
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+

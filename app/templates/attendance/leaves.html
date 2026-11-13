@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Leave Management & Requests{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('attendance.index') }}" class="text-decoration-none text-muted">Attendance</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Leave Management</li>
+        </ol>
+      </nav>
+      <h2 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-file-earmark-medical-fill text-info"></i>
+        <span>Leave Management</span>
+      </h2>
+      <p class="text-muted mb-0">
+        {% if current_user.is_employee %}
+          Submit leave applications and monitor approval status.
+        {% elif current_user.is_manager %}
+          Manage department leave requests and employee absence schedules.
+        {% else %}
+          Manage company-wide employee leave requests and approvals.
+        {% endif %}
+      </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('attendance.submit_leave') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+        <i class="bi bi-plus-circle"></i>
+        <span>Request Leave</span>
+      </a>
+      <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left"></i>
+        <span>Back to Hub</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Status Filters -->
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="{{ url_for('attendance.leaves') }}"
+       class="btn btn-sm {% if not status_filter %}btn-dark{% else %}btn-outline-secondary bg-white{% endif %} rounded-pill px-3">
+      All Requests
+    </a>
+    <a href="{{ url_for('attendance.leaves', status='pending') }}"
+       class="btn btn-sm {% if status_filter == 'pending' %}btn-warning text-dark{% else %}btn-outline-warning text-dark bg-white{% endif %} rounded-pill px-3">
+      <i class="bi bi-hourglass-split me-1"></i>Pending Review
+    </a>
+    <a href="{{ url_for('attendance.leaves', status='approved') }}"
+       class="btn btn-sm {% if status_filter == 'approved' %}btn-success{% else %}btn-outline-success bg-white{% endif %} rounded-pill px-3">
+      <i class="bi bi-check-circle me-1"></i>Approved
+    </a>
+    <a href="{{ url_for('attendance.leaves', status='rejected') }}"
+       class="btn btn-sm {% if status_filter == 'rejected' %}btn-danger{% else %}btn-outline-danger bg-white{% endif %} rounded-pill px-3">
+      <i class="bi bi-x-circle me-1"></i>Rejected
+    </a>
+  </div>
+
+  <!-- Leaves Table -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+        <i class="bi bi-card-checklist text-primary"></i>
+        <span>Leave Requests</span>
+      </h6>
+      <span class="badge bg-light text-muted border">{{ leaves|length }} Total</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light text-muted small text-uppercase">
+          <tr>
+            <th>Employee</th>
+            <th>Leave Type</th>
+            <th>Duration & Dates</th>
+            <th>Reason</th>
+            <th class="text-center">Status</th>
+            <th>Reviewed By</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lv in leaves %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="avatar-sm rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 34px; height: 34px;">
+                    {{ lv.employee.first_name[0] }}{{ lv.employee.last_name[0] }}
+                  </div>
+                  <div>
+                    <span class="fw-bold text-dark">{{ lv.employee.full_name }}</span>
+                    <div class="small text-muted">{{ lv.employee.department.name if lv.employee.department else 'Unassigned' }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border text-capitalize fw-semibold">
+                  {{ lv.leave_type|replace('_', ' ') }}
+                </span>
+              </td>
+              <td>
+                <div class="fw-bold text-dark">
+                  {{ lv.start_date.strftime('%b %d, %Y') }} &rarr; {{ lv.end_date.strftime('%b %d, %Y') }}
+                </div>
+                <small class="text-muted">{{ lv.duration_days }} calendar day(s)</small>
+              </td>
+              <td>
+                <span class="small text-muted text-break" style="max-width: 250px; display: inline-block;">
+                  {{ lv.reason }}
+                </span>
+              </td>
+              <td class="text-center">
+                {% if lv.status == 'approved' %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                    <i class="bi bi-check-circle me-1"></i>Approved
+                  </span>
+                {% elif lv.status == 'pending' %}
+                  <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">
+                    <i class="bi bi-hourglass-split me-1"></i>Pending
+                  </span>
+                {% elif lv.status == 'rejected' %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                    <i class="bi bi-x-circle me-1"></i>Rejected
+                  </span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary px-2 py-1">{{ lv.status|title }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if lv.reviewed_by %}
+                  <span class="small fw-semibold text-dark">{{ lv.reviewed_by.username }}</span>
+                  <div class="small text-muted">{{ lv.reviewed_at.strftime('%b %d, %H:%M') if lv.reviewed_at else '' }}</div>
+                  {% if lv.review_notes %}
+                    <small class="text-muted fst-italic d-block mt-1">"{{ lv.review_notes }}"</small>
+                  {% endif %}
+                {% else %}
+                  <span class="text-muted small fst-italic">Pending</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                {% if (current_user.is_admin or current_user.is_manager) and lv.status == 'pending' %}
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      Review
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow p-2" style="min-width: 280px;">
+                      <li><h6 class="dropdown-header px-1">Review Request #{{ lv.id }}</h6></li>
+                      <li class="p-2">
+                        <!-- Review Form -->
+                        <form method="POST" action="{{ url_for('attendance.approve_leave', id=lv.id) }}" class="mb-2">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <div class="mb-2">
+                            <input type="text" name="review_notes" class="form-control form-control-sm" placeholder="Review notes (optional)...">
+                          </div>
+                          <button type="submit" class="btn btn-success btn-sm w-100 d-flex align-items-center justify-content-center gap-1">
+                            <i class="bi bi-check-lg"></i>
+                            <span>Approve &amp; Log Leave</span>
+                          </button>
+                        </form>
+
+                        <form method="POST" action="{{ url_for('attendance.reject_leave', id=lv.id) }}">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <div class="mb-2">
+                            <input type="text" name="review_notes" class="form-control form-control-sm" placeholder="Reason for rejection (optional)...">
+                          </div>
+                          <button type="submit" class="btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-1">
+                            <i class="bi bi-x-lg"></i>
+                            <span>Reject Request</span>
+                          </button>
+                        </form>
+                      </li>
+                    </ul>
+                  </div>
+                {% else %}
+                  <span class="text-muted small">--</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                <p class="mb-0">No leave requests found for this filter.</p>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

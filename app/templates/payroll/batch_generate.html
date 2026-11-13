@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Batch Monthly Payroll Generation{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-7">
+
+      <!-- Breadcrumbs -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('payroll.index') }}" class="text-decoration-none text-muted">Payroll</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Batch Run</li>
+        </ol>
+      </nav>
+
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <i class="bi bi-lightning-charge-fill text-primary"></i>
+            <span>Batch Monthly Payroll Generation</span>
+          </h5>
+          <p class="text-muted small mb-0">
+            Automatically generate monthly salary records for all active employees based on their structural basic salary.
+          </p>
+        </div>
+
+        <div class="card-body p-4">
+
+          <div class="alert alert-info border-0 bg-info-subtle text-dark small d-flex align-items-start gap-2 mb-4">
+            <i class="bi bi-info-circle-fill text-info fs-5 mt-1"></i>
+            <div>
+              <strong>How Batch Generation Works:</strong>
+              <p class="mb-0 mt-1">
+                The system scans all active employees in the selected target department (or company-wide), pulls each employee's configured basic monthly salary, initializes bonuses and deductions to $0.00, sets <code>Net Salary = Basic Salary</code>, and registers the disbursement record.
+              </p>
+            </div>
+          </div>
+
+          <form method="POST" action="{{ url_for('payroll.batch_generate') }}" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- Target Pay Period -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.month.label }} <span class="text-danger">*</span></label>
+                {{ form.month(class="form-select" + (" is-invalid" if form.month.errors else "")) }}
+                {% for err in form.month.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.year.label }} <span class="text-danger">*</span></label>
+                {{ form.year(class="form-control" + (" is-invalid" if form.year.errors else ""), type="number") }}
+                {% for err in form.year.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Target Department -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">{{ form.department_id.label }}</label>
+              {{ form.department_id(class="form-select" + (" is-invalid" if form.department_id.errors else "")) }}
+              {% for err in form.department_id.errors %}
+                <div class="invalid-feedback">{{ err }}</div>
+              {% endfor %}
+              <div class="form-text small text-muted">Select 'All Active Departments' to run payroll company-wide.</div>
+            </div>
+
+            <!-- Payment Date & Method -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.payment_date.label }}</label>
+                {{ form.payment_date(class="form-control" + (" is-invalid" if form.payment_date.errors else ""), type="date") }}
+                {% for err in form.payment_date.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-12 col-sm-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.payment_method.label }} <span class="text-danger">*</span></label>
+                {{ form.payment_method(class="form-select" + (" is-invalid" if form.payment_method.errors else "")) }}
+                {% for err in form.payment_method.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Status -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">{{ form.status.label }} <span class="text-danger">*</span></label>
+              {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+              {% for err in form.status.errors %}
+                <div class="invalid-feedback">{{ err }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Overwrite Switch -->
+            <div class="form-check form-switch mb-4 p-3 bg-light rounded-3 border">
+              {{ form.overwrite_existing(class="form-check-input ms-0 me-2") }}
+              <label class="form-check-label fw-semibold text-dark small" for="{{ form.overwrite_existing.id }}">
+                {{ form.overwrite_existing.label.text }}
+              </label>
+              <div class="small text-muted ms-4">
+                If enabled, records that already exist for this month will have their basic salary and status updated. If disabled, existing records are safely preserved without changes.
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+              <a href="{{ url_for('payroll.index') }}" class="btn btn-outline-secondary">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+                <i class="bi bi-play-circle-fill"></i>
+                <span>Execute Batch Run</span>
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

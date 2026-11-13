@@ -1,0 +1,501 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ employee.full_name }} | Employee Profile{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumbs & Quick Back -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+        {% if current_user.is_admin or current_user.is_manager %}
+          <li class="breadcrumb-item"><a href="{{ url_for('employee.index') }}" class="text-decoration-none text-muted">Employees</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active" aria-current="page">{{ employee.full_name }}</li>
+      </ol>
+    </nav>
+    <div>
+      {% if current_user.is_admin or current_user.is_manager %}
+        <a href="{{ url_for('employee.index') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-arrow-left"></i>
+          <span>Back to Directory</span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Profile Hero Header Card -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden mb-4">
+    <div class="card-body p-4">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center shadow-sm" style="width: 72px; height: 72px; font-size: 1.75rem;">
+            {{ employee.first_name[0]|upper }}{{ employee.last_name[0]|upper }}
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <h2 class="h3 fw-bold text-dark mb-0">{{ employee.full_name }}</h2>
+              <span class="badge bg-light text-dark border font-monospace">{{ employee.employee_id }}</span>
+              {% if employee.status == 'active' %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                  <i class="bi bi-check-circle-fill me-1"></i>Active
+                </span>
+              {% elif employee.status == 'on_leave' %}
+                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                  <i class="bi bi-clock-history me-1"></i>On Leave
+                </span>
+              {% elif employee.status == 'terminated' %}
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                  <i class="bi bi-x-circle-fill me-1"></i>Terminated
+                </span>
+              {% endif %}
+            </div>
+            <p class="text-muted mb-0 mt-1 d-flex align-items-center gap-3 flex-wrap">
+              <span class="fw-semibold text-dark">{{ employee.job_title }}</span>
+              <span>&bull;</span>
+              {% if employee.department %}
+                <span class="badge bg-info-subtle text-info border border-info-subtle">
+                  <i class="bi bi-building me-1"></i>{{ employee.department.name }} ({{ employee.department.code }})
+                </span>
+              {% else %}
+                <span class="badge bg-light text-muted border">Unassigned Department</span>
+              {% endif %}
+              <span>&bull;</span>
+              <span class="small"><i class="bi bi-calendar3 me-1"></i>Joined: {{ employee.hire_date.strftime('%B %d, %Y') if employee.hire_date else 'Not recorded' }}</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Admin Actions -->
+        {% if current_user.is_admin %}
+          <div class="d-flex align-items-center gap-2">
+            <a href="{{ url_for('employee.edit', id=employee.id) }}" class="btn btn-outline-primary d-flex align-items-center gap-1">
+              <i class="bi bi-pencil-square"></i>
+              <span>Edit Profile</span>
+            </a>
+            <button type="button" class="btn btn-outline-danger d-flex align-items-center gap-1"
+                    onclick="openDeleteModal('{{ employee.id }}', '{{ employee.full_name }}', '{{ employee.employee_id }}')">
+              <i class="bi bi-trash3-fill"></i>
+              <span>Delete</span>
+            </button>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    
+    <!-- Contact Information Card -->
+    <div class="col-12 col-lg-6">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center gap-2">
+          <i class="bi bi-person-lines-fill text-primary fs-5"></i>
+          <h5 class="card-title mb-0 fw-semibold fs-6 text-dark">Contact &amp; Personal Info</h5>
+        </div>
+        <div class="card-body p-4">
+          <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+            <li class="d-flex align-items-start gap-3">
+              <div class="bg-light rounded p-2 text-muted">
+                <i class="bi bi-envelope-fill"></i>
+              </div>
+              <div>
+                <div class="small text-muted">Corporate Email</div>
+                <div class="fw-semibold text-dark">
+                  <a href="mailto:{{ employee.email }}" class="text-decoration-none text-dark">{{ employee.email }}</a>
+                </div>
+              </div>
+            </li>
+            <li class="d-flex align-items-start gap-3">
+              <div class="bg-light rounded p-2 text-muted">
+                <i class="bi bi-telephone-fill"></i>
+              </div>
+              <div>
+                <div class="small text-muted">Phone Number</div>
+                <div class="fw-semibold text-dark">
+                  {% if employee.phone %}
+                    <a href="tel:{{ employee.phone }}" class="text-decoration-none text-dark">{{ employee.phone }}</a>
+                  {% else %}
+                    <span class="text-muted fst-italic">No telephone number registered</span>
+                  {% endif %}
+                </div>
+              </div>
+            </li>
+            <li class="d-flex align-items-start gap-3">
+              <div class="bg-light rounded p-2 text-muted">
+                <i class="bi bi-geo-alt-fill"></i>
+              </div>
+              <div>
+                <div class="small text-muted">Residential Address</div>
+                <div class="fw-semibold text-dark">
+                  {% if employee.address %}
+                    {{ employee.address }}
+                  {% else %}
+                    <span class="text-muted fst-italic">No physical address on file</span>
+                  {% endif %}
+                </div>
+              </div>
+            </li>
+            <li class="d-flex align-items-start gap-3">
+              <div class="bg-light rounded p-2 text-muted">
+                <i class="bi bi-calendar-check-fill"></i>
+              </div>
+              <div>
+                <div class="small text-muted">Official Joining Date</div>
+                <div class="fw-semibold text-dark">
+                  {% if employee.hire_date %}
+                    {{ employee.hire_date.strftime('%A, %B %d, %Y') }}
+                  {% else %}
+                    <span class="text-muted fst-italic">Unspecified</span>
+                  {% endif %}
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employment & System Access Card -->
+    <div class="col-12 col-lg-6">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center gap-2">
+          <i class="bi bi-briefcase-fill text-primary fs-5"></i>
+          <h5 class="card-title mb-0 fw-semibold fs-6 text-dark">Employment &amp; System Access</h5>
+        </div>
+        <div class="card-body p-4">
+          <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+            
+            <li class="d-flex align-items-start gap-3">
+              <div class="bg-light rounded p-2 text-muted">
+                <i class="bi bi-building-check"></i>
+              </div>
+              <div>
+                <div class="small text-muted">Assigned Department</div>
+                <div class="fw-semibold text-dark">
+                  {% if employee.department %}
+                    {{ employee.department.name }} <span class="badge bg-secondary-subtle text-secondary ms-1">{{ employee.department.code }}</span>
+                    {% if employee.department.description %}
+                      <div class="small text-muted mt-1">{{ employee.department.description }}</div>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted fst-italic">No Department Assigned</span>
+                  {% endif %}
+                </div>
+              </div>
+            </li>
+
+            <li class="d-flex align-items-start gap-3">
+              <div class="bg-light rounded p-2 text-muted">
+                <i class="bi bi-cash-coin"></i>
+              </div>
+              <div>
+                <div class="small text-muted">Base Salary</div>
+                <div class="fw-bold fs-5 text-dark font-monospace">
+                  {% if employee.salary %}
+                    ${{ "{:,.2f}".format(employee.salary) }}<span class="fs-6 text-muted fw-normal">/month</span>
+                    <div class="small text-muted fw-normal">Annualized: ${{ "{:,.2f}".format(employee.salary * 12) }}</div>
+                  {% else %}
+                    <span class="text-muted fst-italic fs-6">Undisclosed</span>
+                  {% endif %}
+                </div>
+              </div>
+            </li>
+
+            <li class="d-flex align-items-start gap-3">
+              <div class="bg-light rounded p-2 text-muted">
+                <i class="bi bi-shield-lock-fill"></i>
+              </div>
+              <div>
+                <div class="small text-muted">User Login Account</div>
+                <div>
+                  {% if employee.user %}
+                    <div class="fw-semibold text-dark d-flex align-items-center gap-2">
+                      <span>{{ employee.user.username }}</span>
+                      <span class="badge bg-primary-subtle text-primary border border-primary-subtle text-uppercase" style="font-size: 0.7rem;">
+                        {{ employee.user.role }}
+                      </span>
+                    </div>
+                    <div class="small text-muted mt-1">
+                      Account status: 
+                      {% if employee.user.is_active %}
+                        <span class="text-success fw-medium">Active</span>
+                      {% else %}
+                        <span class="text-danger fw-medium">Suspended</span>
+                      {% endif %}
+                    </div>
+                  {% else %}
+                    <span class="badge bg-light text-muted border">No Portal Login Linked</span>
+                  {% endif %}
+                </div>
+              </div>
+            </li>
+
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tabs / Sections: Attendance, Tasks, Payroll -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-bottom p-0">
+      <ul class="nav nav-tabs card-header-tabs mx-3 mt-2 border-0" id="profileTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active fw-semibold text-dark py-3 px-4 border-0 border-bottom border-primary border-3" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasksTabPane" type="button" role="tab">
+            <i class="bi bi-check2-square text-primary me-2"></i>Tasks &amp; Workflow
+            <span class="badge bg-secondary-subtle text-secondary ms-1">{{ active_tasks|length }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold text-muted py-3 px-4 border-0" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendanceTabPane" type="button" role="tab">
+            <i class="bi bi-calendar-check text-success me-2"></i>Recent Attendance
+            <span class="badge bg-secondary-subtle text-secondary ms-1">{{ attendances|length }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold text-muted py-3 px-4 border-0" id="payroll-tab" data-bs-toggle="tab" data-bs-target="#payrollTabPane" type="button" role="tab">
+            <i class="bi bi-cash-stack text-warning me-2"></i>Payroll History
+            <span class="badge bg-secondary-subtle text-secondary ms-1">{{ payrolls|length }}</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <div class="card-body p-4 tab-content" id="profileTabsContent">
+      
+      <!-- TAB 1: Tasks -->
+      <div class="tab-pane fade show active" id="tasksTabPane" role="tabpanel" tabindex="0">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0">Assigned Corporate Tasks</h6>
+        </div>
+        {% if active_tasks or completed_tasks %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-uppercase small text-muted">
+                <tr>
+                  <th>Task Title</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Due Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for t in active_tasks %}
+                  <tr>
+                    <td>
+                      <div class="fw-semibold text-dark">{{ t.title }}</div>
+                      {% if t.description %}
+                        <div class="small text-muted text-truncate" style="max-width: 400px;">{{ t.description }}</div>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if t.priority == 'urgent' %}
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Urgent</span>
+                      {% elif t.priority == 'high' %}
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle">High</span>
+                      {% elif t.priority == 'medium' %}
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Medium</span>
+                      {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary">Low</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <span class="badge bg-info-subtle text-info border border-info-subtle text-capitalize">{{ t.status|replace('_', ' ') }}</span>
+                    </td>
+                    <td class="small text-muted font-monospace">
+                      {{ t.due_date.strftime('%b %d, %Y') if t.due_date else 'No deadline' }}
+                    </td>
+                  </tr>
+                {% endfor %}
+                {% for t in completed_tasks %}
+                  <tr class="table-light opacity-75">
+                    <td>
+                      <div class="fw-medium text-decoration-line-through text-muted">{{ t.title }}</div>
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary-subtle text-secondary text-capitalize">{{ t.priority }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-success-subtle text-success border border-success-subtle">Completed</span>
+                    </td>
+                    <td class="small text-muted font-monospace">
+                      Finished {{ t.completed_at.strftime('%b %d, %Y') if t.completed_at else 'Done' }}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-check2-circle fs-2 d-block mb-2"></i>
+            No tasks are currently assigned to this employee.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- TAB 2: Attendance -->
+      <div class="tab-pane fade" id="attendanceTabPane" role="tabpanel" tabindex="0">
+        <h6 class="fw-bold text-dark mb-3">Attendance Activity (Last 10 Days)</h6>
+        {% if attendances %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-uppercase small text-muted">
+                <tr>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for a in attendances %}
+                  <tr>
+                    <td class="fw-semibold text-dark font-monospace">
+                      {{ a.date.strftime('%b %d, %Y (%a)') }}
+                    </td>
+                    <td>
+                      {% if a.status == 'present' %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                          <i class="bi bi-check-circle-fill me-1"></i>Present
+                        </span>
+                      {% elif a.status == 'absent' %}
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                          <i class="bi bi-x-circle-fill me-1"></i>Absent
+                        </span>
+                      {% elif a.status == 'on_leave' %}
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">
+                          <i class="bi bi-clock-history me-1"></i>On Leave
+                        </span>
+                      {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary">{{ a.status|capitalize }}</span>
+                      {% endif %}
+                    </td>
+                    <td class="small text-muted">
+                      {{ a.notes or 'Regular working hours' }}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+            No attendance records found for this employee yet.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- TAB 3: Payroll -->
+      <div class="tab-pane fade" id="payrollTabPane" role="tabpanel" tabindex="0">
+        <h6 class="fw-bold text-dark mb-3">Disbursement History</h6>
+        {% if payrolls %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-uppercase small text-muted">
+                <tr>
+                  <th>Period</th>
+                  <th>Base Salary</th>
+                  <th>Bonus</th>
+                  <th>Deductions</th>
+                  <th>Net Paid</th>
+                  <th>Status</th>
+                  <th>Payment Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in payrolls %}
+                  <tr>
+                    <td class="fw-bold text-dark">{{ p.month }}/{{ p.year }}</td>
+                    <td class="font-monospace">${{ "{:,.2f}".format(p.base_salary) }}</td>
+                    <td class="font-monospace text-success">+${{ "{:,.2f}".format(p.bonus or 0) }}</td>
+                    <td class="font-monospace text-danger">-${{ "{:,.2f}".format(p.deductions or 0) }}</td>
+                    <td class="font-monospace fw-bold text-dark">${{ "{:,.2f}".format(p.net_salary) }}</td>
+                    <td>
+                      {% if p.status == 'paid' %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">Paid</span>
+                      {% else %}
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Pending</span>
+                      {% endif %}
+                    </td>
+                    <td class="small text-muted font-monospace">
+                      {{ p.payment_date.strftime('%b %d, %Y') if p.payment_date else 'N/A' }}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-cash-stack fs-2 d-block mb-2"></i>
+            No payroll disbursements processed for this profile yet.
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% if current_user.is_admin %}
+  <div class="modal fade" id="deleteEmployeeModal" tabindex="-1" aria-labelledby="deleteEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title d-flex align-items-center gap-2" id="deleteEmployeeModalLabel">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Confirm Employee Deletion</span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="deleteEmployeeForm" method="POST" action="">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+          <div class="modal-body p-4">
+            <p class="mb-2">Are you sure you want to permanently delete the profile for:</p>
+            <div class="alert alert-light border d-flex align-items-center gap-3 py-2 mb-3">
+              <div class="rounded-circle bg-danger-subtle text-danger fw-bold d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                <i class="bi bi-person-x-fill"></i>
+              </div>
+              <div>
+                <div class="fw-bold text-dark" id="modalEmployeeName">Employee Name</div>
+                <div class="small text-muted font-monospace" id="modalEmployeeId">EMP-0000</div>
+              </div>
+            </div>
+            <div class="small text-danger">
+              <i class="bi bi-info-circle me-1"></i>
+              <strong>Notice:</strong> This action cannot be undone. Attendance logs and payroll records tied to this employee profile will be removed. Associated corporate tasks will be safely unassigned.
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger d-flex align-items-center gap-1">
+              <i class="bi bi-trash3-fill"></i>
+              <span>Permanently Delete</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openDeleteModal(id, name, code) {
+      const modal = new bootstrap.Modal(document.getElementById('deleteEmployeeModal'));
+      document.getElementById('modalEmployeeName').textContent = name;
+      document.getElementById('modalEmployeeId').textContent = code;
+      const form = document.getElementById('deleteEmployeeForm');
+      form.action = "{{ url_for('employee.delete', id=0) }}".replace('/0/delete', '/' + id + '/delete');
+      modal.show();
+    }
+  </script>
+{% endif %}
+
+{% endblock %}
+

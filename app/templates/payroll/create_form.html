@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Edit Payroll Record #{{ payroll.id }}{% else %}Create Payroll Record{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-9">
+
+      <!-- Breadcrumbs -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('payroll.index') }}" class="text-decoration-none text-muted">Payroll</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('payroll.history') }}" class="text-decoration-none text-muted">History</a></li>
+          <li class="breadcrumb-item active" aria-current="page">{% if is_edit %}Edit Record{% else %}New Record{% endif %}</li>
+        </ol>
+      </nav>
+
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+              <i class="bi bi-cash-stack text-success"></i>
+              <span>{% if is_edit %}Edit Payroll Record #{{ payroll.id }}{% else %}Log Individual Payroll Record{% endif %}</span>
+            </h5>
+            <p class="text-muted small mb-0">Record compensation disbursement with bonuses and deductions.</p>
+          </div>
+          {% if is_edit %}
+            <a href="{{ url_for('payroll.salary_slip', id=payroll.id) }}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-receipt me-1"></i>View Payslip
+            </a>
+          {% endif %}
+        </div>
+
+        <div class="card-body p-4">
+
+          <form method="POST" novalidate id="payrollForm">
+            {{ form.hidden_tag() }}
+
+            <!-- Live Interactive Net Calculation Preview Banner -->
+            <div class="p-3 mb-4 rounded-3 bg-light border d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+              <div>
+                <span class="text-muted small text-uppercase fw-bold d-block">Live Net Salary Calculation</span>
+                <span class="small text-muted">
+                  <span id="previewBase" class="fw-bold text-dark">$0.00</span> (Base)
+                  + <span id="previewBonus" class="fw-bold text-success">$0.00</span> (Bonus)
+                  - <span id="previewDeductions" class="fw-bold text-danger">$0.00</span> (Deductions)
+                </span>
+              </div>
+              <div class="text-sm-end">
+                <span class="fs-4 fw-bold text-success font-monospace" id="previewNet">$0.00</span>
+                <span class="d-block small text-muted">Calculated Net Pay</span>
+              </div>
+            </div>
+
+            <!-- Employee & Pay Period -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold text-dark small">{{ form.employee_id.label }} <span class="text-danger">*</span></label>
+                {{ form.employee_id(class="form-select" + (" is-invalid" if form.employee_id.errors else ""), id="employeeSelect") }}
+                {% for err in form.employee_id.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+                <div class="form-text small text-muted">Selecting an employee automatically fills their structural basic salary.</div>
+              </div>
+
+              <div class="col-6 col-md-3">
+                <label class="form-label fw-semibold text-dark small">{{ form.month.label }} <span class="text-danger">*</span></label>
+                {{ form.month(class="form-select" + (" is-invalid" if form.month.errors else "")) }}
+                {% for err in form.month.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-6 col-md-3">
+                <label class="form-label fw-semibold text-dark small">{{ form.year.label }} <span class="text-danger">*</span></label>
+                {{ form.year(class="form-control" + (" is-invalid" if form.year.errors else ""), type="number") }}
+                {% for err in form.year.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Basic Salary -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold text-dark small">{{ form.base_salary.label }} <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                {{ form.base_salary(class="form-control font-monospace" + (" is-invalid" if form.base_salary.errors else ""), id="baseSalaryInput", step="0.01", placeholder="0.00") }}
+              </div>
+              {% for err in form.base_salary.errors %}
+                <div class="text-danger small mt-1">{{ err }}</div>
+              {% endfor %}
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Bonuses Section -->
+            <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+              <i class="bi bi-plus-circle-fill text-success"></i>
+              <span>Bonus &amp; Allowances (Additions)</span>
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-12 col-md-4">
+                <label class="form-label fw-semibold text-dark small">{{ form.bonus.label }}</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  {{ form.bonus(class="form-control font-monospace" + (" is-invalid" if form.bonus.errors else ""), id="bonusInput", step="0.01", placeholder="0.00") }}
+                </div>
+                {% for err in form.bonus.errors %}
+                  <div class="text-danger small mt-1">{{ err }}</div>
+                {% endfor %}
+              </div>
+              <div class="col-12 col-md-8">
+                <label class="form-label fw-semibold text-dark small">{{ form.bonus_description.label }}</label>
+                {{ form.bonus_description(class="form-control" + (" is-invalid" if form.bonus_description.errors else ""), placeholder="e.g. Performance Incentive, Overtime, Holiday Bonus...") }}
+                {% for err in form.bonus_description.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Deductions Section -->
+            <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+              <i class="bi bi-dash-circle-fill text-danger"></i>
+              <span>Deductions &amp; Withholdings (Subtractions)</span>
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-12 col-md-4">
+                <label class="form-label fw-semibold text-dark small">{{ form.deductions.label }}</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  {{ form.deductions(class="form-control font-monospace" + (" is-invalid" if form.deductions.errors else ""), id="deductionsInput", step="0.01", placeholder="0.00") }}
+                </div>
+                {% for err in form.deductions.errors %}
+                  <div class="text-danger small mt-1">{{ err }}</div>
+                {% endfor %}
+              </div>
+              <div class="col-12 col-md-8">
+                <label class="form-label fw-semibold text-dark small">{{ form.deduction_description.label }}</label>
+                {{ form.deduction_description(class="form-control" + (" is-invalid" if form.deduction_description.errors else ""), placeholder="e.g. Tax withholding, Health Insurance, Unpaid Leave...") }}
+                {% for err in form.deduction_description.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Disbursement Details -->
+            <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+              <i class="bi bi-credit-card-2-front text-primary"></i>
+              <span>Payment &amp; Disbursement Logistics</span>
+            </h6>
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label fw-semibold text-dark small">{{ form.payment_date.label }}</label>
+                {{ form.payment_date(class="form-control" + (" is-invalid" if form.payment_date.errors else ""), type="date") }}
+                {% for err in form.payment_date.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label fw-semibold text-dark small">{{ form.payment_method.label }} <span class="text-danger">*</span></label>
+                {{ form.payment_method(class="form-select" + (" is-invalid" if form.payment_method.errors else "")) }}
+                {% for err in form.payment_method.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label fw-semibold text-dark small">{{ form.reference_no.label }}</label>
+                {{ form.reference_no(class="form-control" + (" is-invalid" if form.reference_no.errors else ""), placeholder="Cheque / Wire Ref...") }}
+                {% for err in form.reference_no.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label fw-semibold text-dark small">{{ form.status.label }} <span class="text-danger">*</span></label>
+                {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                {% for err in form.status.errors %}
+                  <div class="invalid-feedback">{{ err }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold text-dark small">{{ form.notes.label }}</label>
+              {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows="3", placeholder="Optional remarks or disbursement notes...") }}
+              {% for err in form.notes.errors %}
+                <div class="invalid-feedback">{{ err }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex align-items-center justify-content-between pt-3 border-top">
+              <a href="{{ url_for('payroll.history') }}" class="btn btn-outline-secondary">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-success d-flex align-items-center gap-2 shadow-sm">
+                <i class="bi bi-save"></i>
+                <span>{{ form.submit.label.text }}</span>
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Client-side Interactive Net Salary Calculation and Autocomplete -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const baseInput = document.getElementById("baseSalaryInput");
+  const bonusInput = document.getElementById("bonusInput");
+  const deductionsInput = document.getElementById("deductionsInput");
+  const empSelect = document.getElementById("employeeSelect");
+
+  const previewBase = document.getElementById("previewBase");
+  const previewBonus = document.getElementById("previewBonus");
+  const previewDeductions = document.getElementById("previewDeductions");
+  const previewNet = document.getElementById("previewNet");
+
+  function formatMoney(amount) {
+    return "$" + (isNaN(amount) ? "0.00" : Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  }
+
+  function updateLiveNet() {
+    const base = parseFloat(baseInput.value) || 0;
+    const bonus = parseFloat(bonusInput.value) || 0;
+    const deductions = parseFloat(deductionsInput.value) || 0;
+    const net = base + bonus - deductions;
+
+    previewBase.textContent = formatMoney(base);
+    previewBonus.textContent = formatMoney(bonus);
+    previewDeductions.textContent = formatMoney(deductions);
+    previewNet.textContent = formatMoney(net);
+
+    if (net < 0) {
+      previewNet.classList.remove("text-success");
+      previewNet.classList.add("text-danger");
+    } else {
+      previewNet.classList.remove("text-danger");
+      previewNet.classList.add("text-success");
+    }
+  }
+
+  baseInput.addEventListener("input", updateLiveNet);
+  bonusInput.addEventListener("input", updateLiveNet);
+  deductionsInput.addEventListener("input", updateLiveNet);
+
+  // Auto-fill basic salary on employee selection
+  if (empSelect) {
+    empSelect.addEventListener("change", function () {
+      const empId = parseInt(this.value, 10);
+      if (empId > 0) {
+        fetch("/payroll/api/employee-salary/" + empId)
+          .then(res => {
+            if (!res.ok) throw new Error("Network response was not ok");
+            return res.json();
+          })
+          .then(data => {
+            if (data && data.base_salary !== undefined) {
+              baseInput.value = Number(data.base_salary).toFixed(2);
+              updateLiveNet();
+            }
+          })
+          .catch(err => console.log("Salary fetch note:", err));
+      }
+    });
+  }
+
+  // Initial calculation
+  updateLiveNet();
+});
+</script>
+{% endblock %}
+

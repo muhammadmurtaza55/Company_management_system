@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Task Execution &amp; Delivery Report{% endblock %}
+
+{% block extra_css %}
+<style>
+  @media print {
+    nav.navbar, footer.footer, .no-print, .breadcrumb, .alert { display: none !important; }
+    body { background-color: #fff !important; }
+    .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 no-print">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('report.index') }}" class="text-decoration-none text-muted">Reports</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Tasks</li>
+        </ol>
+      </nav>
+      <h2 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-check2-square text-dark"></i>
+        <span>Task Delivery &amp; Workflow Execution Report</span>
+      </h2>
+      <p class="text-muted mb-0">Operational performance review tracking completed milestones and overdue tasks.</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <button onclick="window.print()" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+        <i class="bi bi-printer-fill"></i>
+        <span>Print Report</span>
+      </button>
+      <a href="{{ url_for('report.export_tasks_csv') }}" class="btn btn-outline-success btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-file-earmark-spreadsheet"></i>
+        <span>Export CSV</span>
+      </a>
+      <a href="{{ url_for('report.index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Hub
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Badges -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-primary h-100 text-center">
+        <span class="text-muted small fw-bold text-uppercase">Total Assigned</span>
+        <h3 class="fw-bold text-dark my-1">{{ counts.total }}</h3>
+        <span class="text-muted small">Work packages</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-warning h-100 text-center">
+        <span class="text-muted small fw-bold text-uppercase">Pending</span>
+        <h3 class="fw-bold text-warning-emphasis my-1">{{ counts.pending }}</h3>
+        <span class="text-muted small">Awaiting initiation</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-info h-100 text-center">
+        <span class="text-muted small fw-bold text-uppercase">In Progress</span>
+        <h3 class="fw-bold text-info my-1">{{ counts.in_progress }}</h3>
+        <span class="text-muted small">Active development</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-success h-100 text-center">
+        <span class="text-muted small fw-bold text-uppercase">Completed</span>
+        <h3 class="fw-bold text-success my-1">{{ counts.completed }}</h3>
+        <span class="text-success small">Milestones delivered</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light text-muted small text-uppercase">
+          <tr>
+            <th>Task Title</th>
+            <th>Assignee</th>
+            <th>Department</th>
+            <th class="text-center">Priority</th>
+            <th class="text-center">Status</th>
+            <th>Deadline</th>
+            <th class="pe-3">Completed Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tasks %}
+            <tr class="{% if t.is_overdue %}table-danger table-opacity-10{% endif %}">
+              <td>
+                <span class="fw-bold text-dark">{{ t.title }}</span>
+                {% if t.description %}
+                  <div class="small text-muted text-truncate" style="max-width: 280px;">{{ t.description }}</div>
+                {% endif %}
+              </td>
+              <td>
+                {% if t.assignee %}
+                  <span class="fw-semibold text-dark">{{ t.assignee.full_name }}</span>
+                  <div class="small text-muted font-monospace">{{ t.assignee.employee_id }}</div>
+                {% else %}
+                  <span class="text-muted fst-italic">Unassigned</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">
+                  {{ t.assignee.department.name if t.assignee and t.assignee.department else 'Unassigned' }}
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="badge {{ t.priority_badge_class }} px-2 py-1 text-capitalize">
+                  {{ t.priority }}
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="badge {{ t.status_badge_class }} px-2 py-1 text-capitalize">
+                  {{ t.status|replace('_', ' ') }}
+                </span>
+              </td>
+              <td>
+                {% if t.due_date %}
+                  <span class="small {% if t.is_overdue %}text-danger fw-bold{% else %}text-dark{% endif %}">
+                    {{ t.due_date.strftime('%b %d, %Y') }}
+                    {% if t.is_overdue %}<span class="badge bg-danger ms-1">Overdue</span>{% endif %}
+                  </span>
+                {% else %}
+                  <span class="text-muted small">--</span>
+                {% endif %}
+              </td>
+              <td class="pe-3 small text-muted">
+                {{ t.completed_at|karachi_time('%b %d, %Y') if t.completed_at else '--' }}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">No task records found matching your filters.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

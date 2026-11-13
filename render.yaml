@@ -25,7 +25,6 @@ services:
 databases:
   - name: company-management-db
     databaseName: company_management
-    user: postgres
     region: oregon
     plan: free
     ipAllowList: []
